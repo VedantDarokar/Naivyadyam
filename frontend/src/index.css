@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap');
+@import "tailwindcss";
+
+/*
+ * ================================================================
+ *  NAIVADYAM — AUTHENTIC INDIAN BRAND DESIGN SYSTEM
+ *  Extracted from actual product packaging photography:
+ *  ─ Maroon/Crimson  : #7B1A1A  (logo banner on all boxes)
+ *  ─ Deep Crimson    : #5A0E0E  (shadow / dark variant)
+ *  ─ Sacred Gold     : #E6A817  (label accents)
+ *  ─ Warm Yellow     : #F5C518  (Chakli label yellow)
+ *  ─ Veg Green       : #1D7A40  (100% Pure Vegetarian badge)
+ *  ─ Deep Teal       : #1A4A35  (Dhokla/Idli packaging)
+ *  ─ Charcoal Dark   : #1A2332  (Dark packaging bg)
+ *  ─ Saffron Orange  : #E87B35  (Food warmth)
+ *  ─ Cream Bg Light  : #FFF9F2  (Clean presentation)
+ * ================================================================
+ */
+
+@layer base {
+  :root {
+    /* Brand Palette */
+    --maroon:       #7B1A1A;
+    --maroon-deep:  #5A0E0E;
+    --maroon-light: #A02828;
+    --gold:         #E6A817;
+    --gold-bright:  #F5C518;
+    --gold-deep:    #C08912;
+    --veg-green:    #1D7A40;
+    --saffron:      #E87B35;
+    --charcoal:     #1A2332;
+
+    /* Light Mode Surfaces */
+    --bg-base:      #FFF9F2;
+    --bg-surface:   #FFFFFF;
+    --bg-raised:    #FFF3E8;
+    --bg-muted:     #FDF0E4;
+    --border:       #F0D9C8;
+    --text-primary: #1A0A00;
+    --text-secondary: #5A2D0C;
+    --text-muted:   #9A6040;
+  }
+
+  .dark {
+    --bg-base:      #0F0A06;
+    --bg-surface:   #1A0E08;
+    --bg-raised:    #231508;
+    --bg-muted:     #2A1A0C;
+    --border:       #3D2010;
+    --text-primary: #FFF5EA;
+    --text-secondary: #E8C89A;
+    --text-muted:   #B08060;
+  }
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Glass Surface ──────────────────────────────────────── */
+.glass-surface {
+  background: rgba(255, 249, 242, 0.92);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(123, 26, 26, 0.12);
+}
+.dark .glass-surface {
+  background: rgba(26, 14, 8, 0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(230, 168, 23, 0.10);
+}
+
+/* ── Announcement Stripe ────────────────────────────────── */
+.brand-stripe {
+  background: linear-gradient(90deg,
+    #5A0E0E 0%,
+    #7B1A1A 35%,
+    #A02828 50%,
+    #7B1A1A 65%,
+    #5A0E0E 100%
+  );
+  border-bottom: 2px solid #E6A817;
+}
+
+/* ── Hero Background ────────────────────────────────────── */
+.hero-indian {
+  background: linear-gradient(135deg,
+    #1A0A00 0%,
+    #3D1206 30%,
+    #5A1A0A 55%,
+    #2A0D04 80%,
+    #0F0600 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+.hero-indian::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(230, 168, 23, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(232, 123, 53, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ── Gold Divider ───────────────────────────────────────── */
+.gold-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E6A817, #F5C518, #E6A817, transparent);
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #7B1A1A 0%, #A02828 100%);
+  color: #F5C518;
+  font-weight: 800;
+  border: 1px solid rgba(230, 168, 23, 0.4);
+  box-shadow: 0 6px 20px -4px rgba(123, 26, 26, 0.5);
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5A0E0E 0%, #7B1A1A 100%);
+  box-shadow: 0 10px 28px -4px rgba(123, 26, 26, 0.65);
+  transform: translateY(-1px);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #C08912 0%, #F5C518 50%, #E6A817 100%);
+  color: #3D1206;
+  font-weight: 800;
+  border: 1px solid rgba(245, 197, 24, 0.5);
+  box-shadow: 0 6px 20px -4px rgba(230, 168, 23, 0.5);
+  transition: all 0.2s ease;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, #A07610 0%, #E6A817 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px -4px rgba(230, 168, 23, 0.6);
+}
+
+.btn-outline-gold {
+  background: transparent;
+  color: #E6A817;
+  font-weight: 700;
+  border: 1.5px solid rgba(230, 168, 23, 0.5);
+  transition: all 0.2s ease;
+}
+.btn-outline-gold:hover {
+  background: rgba(230, 168, 23, 0.1);
+  border-color: #E6A817;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.card-product {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px -4px rgba(123, 26, 26, 0.08);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.card-product:hover {
+  box-shadow: 0 16px 40px -8px rgba(123, 26, 26, 0.18);
+  transform: translateY(-3px);
+  border-color: rgba(230, 168, 23, 0.35);
+}
+
+/* ── Veg Badge ──────────────────────────────────────────── */
+.veg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(29, 122, 64, 0.12);
+  border: 1px solid #1D7A40;
+  border-radius: 6px;
+  color: #1D7A40;
+  font-size: 10px;
+  font-weight: 700;
+}
+.veg-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1D7A40;
+  border: 1px solid #1D7A40;
+  flex-shrink: 0;
+}
+
+/* ── Typography Utilities ───────────────────────────────── */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #E6A817 0%, #F5C518 50%, #C08912 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-brand-gradient {
+  background: linear-gradient(135deg, #F5C518 0%, #FFFFFF 40%, #E6A817 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.animate-fade-in { animation: fadeIn 0.35s ease forwards; }
+.animate-float   { animation: floatUp 4s ease-in-out infinite; }
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7B1A1A, #E6A817);
+  border-radius: 9999px;
+}
+
+/* ── Selection ──────────────────────────────────────────── */
+::selection {
+  background: rgba(230, 168, 23, 0.3);
+  color: #3D1206;
+}
