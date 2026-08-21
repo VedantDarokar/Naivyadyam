@@ -71,7 +71,7 @@ const createMailTransporter = () => {
  */
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
+  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
   const firstName = (userName || 'Customer').split(' ')[0];
 
   const textContent = `Namaste ${firstName},\n\nYour Naivadyam verification code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share it.\n\n— Team Naivadyam`;
@@ -405,7 +405,7 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
  */
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
+  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
   const firstName = (userName || 'Customer').split(' ')[0];
   const subject = `${otpCode} is your Naivadyam Password Reset Code`;
 
