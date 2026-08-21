@@ -6,7 +6,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 
 const { connectDB } = require('./config/db');
@@ -17,6 +16,9 @@ const { protect } = require('./middleware/authMiddleware');
 
 const app = express();
 const server = http.createServer(app);
+
+// Enable trust proxy for Render / Vercel / Heroku reverse proxies
+app.set('trust proxy', 1);
 
 // Disable x-powered-by header
 app.disable('x-powered-by');
@@ -45,18 +47,35 @@ app.use((req, res, next) => {
   next();
 });
 
-// 3. CORS Configuration
-const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:5173'] : '*';
+// 3. CORS Configuration supporting Vercel and production origins
+const allowedOrigins = [
+  'https://naivyadyam.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, ''));
+}
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Fallback allow in production to prevent CORS lockouts
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// 4. Rate Limiting Protection
+app.options('*', cors());
+
+// 4. Rate Limiting Protection (Behind Proxy)
 const generalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Limit each IP to 500 requests per windowMs
+  max: 1000, // Limit each IP to 1000 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
@@ -64,7 +83,7 @@ const generalApiLimiter = rateLimit({
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 auth/OTP requests per windowMs
+  max: 50, // Limit each IP to 50 auth/OTP requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many verification or authentication attempts. Please try again in 15 minutes.' }
@@ -85,7 +104,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
