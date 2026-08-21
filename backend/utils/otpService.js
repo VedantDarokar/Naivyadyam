@@ -11,10 +11,10 @@ const nodemailer = require('nodemailer');
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-  const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam';
-  const fromEmail = process.env.EMAIL_FROM || smtpUser || 'no-reply@naivadyam.com';
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
+  const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
+  const fromEmail = process.env.EMAIL_FROM || smtpUser || 'naivyadyamtds@gmail.com';
 
   if (!smtpUser || !smtpPass) {
     console.warn(`[OTP Email Warning] SMTP credentials not set. Generated Email OTP: ${otpCode} for ${toEmail}`);
@@ -204,8 +204,8 @@ const sendRealSmsOtp = async (toPhone, otpCode) => {
 const sendContactInquiryEmail = async ({ name, email, phone, subject, message }) => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
   if (!smtpUser || !smtpPass) {
     console.warn('[Contact Inquiry Warning] SMTP credentials missing in .env');
@@ -288,8 +288,8 @@ const sendContactInquiryEmail = async ({ name, email, phone, subject, message })
 const sendTicketCreatedNotification = async (ticket) => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
   if (!smtpUser || !smtpPass) {
     console.warn('[Ticket Email Warning] SMTP credentials missing in .env');
@@ -377,8 +377,8 @@ const sendTicketCreatedNotification = async (ticket) => {
 const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
   if (!smtpUser || !smtpPass) return { success: false };
 
@@ -437,8 +437,8 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
 
   if (!smtpUser || !smtpPass) {
