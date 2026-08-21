@@ -1,10 +1,18 @@
 import { io } from 'socket.io-client';
 
-const URL = window.location.origin.includes('localhost:3000')
-  ? 'http://localhost:5000'
-  : window.location.origin;
+// Derive Socket.IO backend host from VITE_SOCKET_URL or VITE_API_URL
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+  }
+  return 'http://localhost:5000';
+};
 
-export const socket = io(URL, {
+export const socket = io(getSocketUrl(), {
   autoConnect: true,
   reconnection: true,
+  transports: ['websocket', 'polling']
 });
