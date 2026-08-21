@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
         ? `Verification Code: ${data.devOtp} (Cloud SMTP blocked by Gmail)`
         : 'Verification code sent to your email!';
       showToast(msg, 'success');
-      return { success: true };
+      return { success: true, devOtp: data.devOtp };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to send verification codes';
       showToast(message, 'error');
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }) => {
         ? `Password Reset Code: ${data.devOtp} (Cloud SMTP blocked by Gmail)`
         : 'Password reset code sent to your email!';
       showToast(msg, 'success');
-      return { success: true };
+      return { success: true, devOtp: data.devOtp };
     } catch (error) {
       const message = error.response?.data?.message || 'Error requesting password reset';
       showToast(message, 'error');
