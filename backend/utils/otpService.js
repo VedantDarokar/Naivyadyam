@@ -8,7 +8,7 @@ const axios = require('axios');
  */
 const sendViaBrevoApi = async ({ to, toName, subject, htmlContent, textContent, fromName, fromEmail }) => {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) return null; // No API key, fall back to SMTP
+  if (!apiKey || !apiKey.startsWith('xkeysib-')) return null; // No valid API key, fall back to SMTP
 
   const response = await axios.post(
     'https://api.brevo.com/v3/smtp/email',
@@ -405,111 +405,74 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
  */
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  // Use SMTP_USER as the verified sender in Brevo — must match a verified domain/sender
   const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
+  const firstName = (userName || 'Customer').split(' ')[0];
+  const subject = `${otpCode} is your Naivadyam Password Reset Code`;
 
-  try {
-    const transporter = createMailTransporter();
-    const firstName = (userName || 'Customer').split(' ')[0];
+  const textContent = `Namaste ${firstName},\n\nYour Naivadyam password reset code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share it.\n\n— Team Naivadyam | +91 8149471804`;
 
-    const textContent = `
-Namaste ${firstName},
-
-Your password reset verification code for Naivadyam is:
-
-${otpCode}
-
-This code expires in 10 minutes. Do not share it with anyone.
-
-If you did not request a password reset, please ignore this email.
-
-— Team Naivadyam
-naivadyam.in | Helpline: +91 8149471804
-    `.trim();
-
-    const htmlContent = `<!DOCTYPE html>
+  const htmlContent = `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naivadyam — Password Reset Code</title>
-</head>
+<head><meta charset="UTF-8"><title>Naivadyam — Password Reset</title></head>
 <body style="margin:0;padding:0;background-color:#f5f0e8;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f0e8;padding:24px 0;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #7B1A1A;max-width:520px;">
-
-          <!-- Header -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#5A0E0E 0%,#7B1A1A 100%);padding:28px 24px;text-align:center;">
-              <h1 style="margin:0;font-size:26px;font-weight:800;color:#F5C518;letter-spacing:1px;">नैवेद्यम्</h1>
-              <p style="margin:6px 0 0;font-size:12px;color:#f5e0b3;letter-spacing:0.5px;">Account Password Reset &nbsp;·&nbsp; The Divine Serve</p>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding:32px 32px 24px;">
-              <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#3d1206;">Namaste ${firstName},</p>
-              <p style="margin:0 0 24px;font-size:14px;color:#5a3d28;line-height:1.6;">
-                We received a request to reset your Naivadyam account password. Please use the verification code below to set a new password:
-              </p>
-
-              <!-- OTP Box -->
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding:8px 0 24px;">
-                    <div style="display:inline-block;background:#7B1A1A;color:#F5C518;font-size:34px;font-weight:900;letter-spacing:10px;padding:16px 32px;border-radius:12px;border:2px solid #E6A817;">
-                      ${otpCode}
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin:0;font-size:12px;color:#8c6a50;text-align:center;background:#faf5ed;padding:12px;border-radius:8px;border-left:4px solid #E6A817;">
-                ⏱ This code is valid for <strong>10 minutes</strong>.<br>
-                For security reasons, do not share this code with anyone.
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding:20px 32px;text-align:center;border-top:1px solid #ebdcb8;">
-              <p style="margin:0;font-size:11px;color:#a08070;line-height:1.6;">
-                If you did not request a password reset, please secure your account immediately.<br>
-                &copy; ${new Date().getFullYear()} Naivadyam &nbsp;·&nbsp; Helpline: +91 8149471804
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #7B1A1A;max-width:520px;">
+        <tr>
+          <td style="background:linear-gradient(135deg,#5A0E0E 0%,#7B1A1A 100%);padding:28px 24px;text-align:center;">
+            <h1 style="margin:0;font-size:26px;font-weight:800;color:#F5C518;">नैवेद्यम्</h1>
+            <p style="margin:6px 0 0;font-size:12px;color:#f5e0b3;">Account Password Reset &nbsp;·&nbsp; The Divine Serve</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#3d1206;">Namaste ${firstName},</p>
+            <p style="margin:0 0 24px;font-size:14px;color:#5a3d28;line-height:1.6;">Use the verification code below to reset your Naivadyam password:</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 24px;">
+                <div style="display:inline-block;background:#7B1A1A;color:#F5C518;font-size:34px;font-weight:900;letter-spacing:10px;padding:16px 32px;border-radius:12px;border:2px solid #E6A817;">
+                  ${otpCode}
+                </div>
+              </td></tr>
+            </table>
+            <p style="margin:0;font-size:12px;color:#8c6a50;text-align:center;background:#faf5ed;padding:12px;border-radius:8px;">
+              ⏱ Valid for <strong>10 minutes</strong>. Do not share this code with anyone.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;text-align:center;border-top:1px solid #ebdcb8;">
+            <p style="margin:0;font-size:11px;color:#a08070;">
+              &copy; ${new Date().getFullYear()} Naivadyam &nbsp;·&nbsp; Helpline: +91 8149471804
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
   </table>
 </body>
 </html>`;
 
-    const info = await transporter.sendMail({
-      from: `"${fromName}" <${fromEmail}>`,
-      replyTo: fromEmail,
-      to: toEmail,
-      subject: `${otpCode} is your Naivadyam Password Reset Code`,
-      text: textContent,
-      html: htmlContent,
-      headers: {
-        'X-Mailer': 'Naivadyam Mailer v1',
-        'X-Priority': '1',
-        'Importance': 'high'
-      }
-    });
+  // 1. Try Brevo HTTP API first (works on Render — no SMTP port blocking)
+  try {
+    const apiResult = await sendViaBrevoApi({ to: toEmail, toName: userName, subject, htmlContent, textContent, fromName, fromEmail });
+    if (apiResult !== null) {
+      console.log(`✅ [Brevo API Password Reset Email Sent] to ${toEmail}`);
+      return { success: true };
+    }
+  } catch (apiErr) {
+    console.warn(`⚠️ [Brevo API Error] ${apiErr.response?.data?.message || apiErr.message} — falling back to SMTP`);
+  }
 
-    console.log(`✅ [Password Reset Email Sent] MessageID: ${info.messageId} to ${toEmail}`);
+  // 2. Fallback: SMTP
+  try {
+    const transporter = createMailTransporter();
+    const info = await transporter.sendMail({ from: `"${fromName}" <${fromEmail}>`, replyTo: fromEmail, to: toEmail, subject, text: textContent, html: htmlContent });
+    console.log(`✅ [SMTP Password Reset Email Sent] MessageID: ${info.messageId} to ${toEmail}`);
     return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`❌ [Password Reset Email Error] ${error.message}`);
-    return { success: false, error: error.message };
+  } catch (smtpErr) {
+    console.error(`❌ [SMTP Password Reset Error] ${smtpErr.message}`);
+    return { success: false, error: smtpErr.message };
   }
 };
 
@@ -521,3 +484,4 @@ module.exports = {
   sendTicketReplyNotification,
   sendPasswordResetEmail
 };
+

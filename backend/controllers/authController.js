@@ -585,10 +585,15 @@ const forgotPassword = async (req, res) => {
     // Send Real Password Reset Email
     const emailRes = await sendPasswordResetEmail(cleanEmail, resetOtp, userName);
 
+    if (!emailRes.success) {
+      return res.status(500).json({
+        message: 'Failed to send password reset email. Please check your email address and try again.'
+      });
+    }
+
     return res.json({
       message: 'Password reset code sent to your email address',
-      email: cleanEmail,
-      // No devOtp in response for security
+      email: cleanEmail
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
