@@ -106,7 +106,8 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE']
-  }
+  },
+  transports: ['polling', 'websocket']
 });
 
 // Attach Socket.IO to Express app for controllers to access

@@ -14,5 +14,8 @@ const getSocketUrl = () => {
 export const socket = io(getSocketUrl(), {
   autoConnect: true,
   reconnection: true,
-  transports: ['websocket', 'polling']
+  reconnectionAttempts: 10,
+  reconnectionDelay: 2000,
+  timeout: 20000,
+  transports: ['polling', 'websocket']
 });
