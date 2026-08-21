@@ -2,23 +2,42 @@ const nodemailer = require('nodemailer');
 
 /**
  * Helper to create cloud-compatible Nodemailer Transporter
- * Uses host: 'smtp.gmail.com', port: 465 SSL, with 10s connection timeouts
+ * Reads SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS from Environment Variables
  */
-const createMailTransporter = (smtpUser, smtpPass) => {
+const createMailTransporter = () => {
+  const host = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
+
+  if (!user || !pass) {
+    // Fallback to local transport if credentials missing
+    return nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'naivyadyamtds@gmail.com',
+        pass: 'ywqu lsxj vfvl colf'
+      }
+    });
+  }
+
+  if (host.includes('brevo.com') || user.includes('smtp-brevo.com')) {
+    return nodemailer.createTransport({
+      host: 'smtp-relay.brevo.com',
+      port: port,
+      secure: false,
+      auth: { user, pass }
+    });
+  }
+
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: smtpUser.trim(),
-      pass: smtpPass.trim().replace(/\s+/g, '')
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    host: host,
+    port: port,
+    secure: port === 465,
+    auth: { user, pass },
+    tls: { rejectUnauthorized: false }
   });
 };
 
@@ -26,18 +45,11 @@ const createMailTransporter = (smtpUser, smtpPass) => {
  * Send real Email OTP using Nodemailer
  */
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  const fromEmail = process.env.EMAIL_FROM || smtpUser || 'naivyadyamtds@gmail.com';
-
-  if (!smtpUser || !smtpPass) {
-    console.warn(`[OTP Email Warning] SMTP credentials not set. Generated Email OTP: ${otpCode} for ${toEmail}`);
-    return { success: false, fallback: true, message: 'SMTP credentials missing in .env' };
-  }
+  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
 
   try {
-    const transporter = createMailTransporter(smtpUser, smtpPass);
+    const transporter = createMailTransporter();
     const firstName = (userName || 'Customer').split(' ')[0];
 
     const textContent = `
@@ -203,23 +215,16 @@ const sendRealSmsOtp = async (toPhone, otpCode) => {
  * Send Customer Contact Inquiry Email
  */
 const sendContactInquiryEmail = async ({ name, email, phone, subject, message }) => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
-
-  if (!smtpUser || !smtpPass) {
-    console.warn('[Contact Inquiry Warning] SMTP credentials missing in .env');
-    return { success: false, message: 'SMTP credentials missing' };
-  }
-
   try {
-    const transporter = createMailTransporter(smtpUser, smtpPass);
+    const transporter = createMailTransporter();
     const cleanSubject = subject || 'General Query';
+    const storeEmail = 'naivyadyamtds@gmail.com';
 
     // 1. Email sent to official store inbox naivyadyamtds@gmail.com
     await transporter.sendMail({
-      from: `"Naivadyam Contact Desk" <${smtpUser}>`,
+      from: `"Naivadyam Contact Desk" <${storeEmail}>`,
       replyTo: email,
-      to: 'naivyadyamtds@gmail.com',
+      to: storeEmail,
       subject: `[New Inquiry] ${cleanSubject} - ${name}`,
       text: `New Customer Inquiry Received:\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || 'N/A'}\nSubject: ${cleanSubject}\n\nMessage:\n${message}`,
       html: `
@@ -242,7 +247,7 @@ const sendContactInquiryEmail = async ({ name, email, phone, subject, message })
 
     // 2. Automated Confirmation Email sent back to customer
     await transporter.sendMail({
-      from: `"Naivadyam — The Divine Serve" <${smtpUser}>`,
+      from: `"Naivadyam — The Divine Serve" <${storeEmail}>`,
       to: email,
       subject: `We have received your inquiry: ${cleanSubject}`,
       text: `Namaste ${name},\n\nThank you for contacting Naivadyam. We have received your message regarding "${cleanSubject}" and our team will get back to you within 4 hours.\n\n— Team Naivadyam\nnaivyadyamtds@gmail.com | +91 8149471804`,
@@ -275,22 +280,15 @@ const sendContactInquiryEmail = async ({ name, email, phone, subject, message })
  * Send Email Notification when a new Support Ticket is created
  */
 const sendTicketCreatedNotification = async (ticket) => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
-
-  if (!smtpUser || !smtpPass) {
-    console.warn('[Ticket Email Warning] SMTP credentials missing in .env');
-    return { success: false, message: 'SMTP credentials missing' };
-  }
-
   try {
-    const transporter = createMailTransporter(smtpUser, smtpPass);
+    const transporter = createMailTransporter();
     const ticketIdStr = ticket._id ? ticket._id.toString().slice(-6).toUpperCase() : 'TK' + Date.now().toString().slice(-4);
+    const storeEmail = 'naivyadyamtds@gmail.com';
 
     // 1. Email to Admin (naivyadyamtds@gmail.com)
     await transporter.sendMail({
-      from: `"Naivadyam Support Desk" <${smtpUser}>`,
-      to: 'naivyadyamtds@gmail.com',
+      from: `"Naivadyam Support Desk" <${storeEmail}>`,
+      to: storeEmail,
       subject: `🚨 [New Ticket #${ticketIdStr}] ${ticket.priority || 'Medium'} Priority: ${ticket.subject}`,
       text: `New Ticket Created:\nTicket ID: #${ticketIdStr}\nUser: ${ticket.userName} (${ticket.userEmail})\nOrder ID: ${ticket.orderId || 'N/A'}\nPriority: ${ticket.priority}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}`,
       html: `
@@ -314,7 +312,7 @@ const sendTicketCreatedNotification = async (ticket) => {
 
     // 2. Email to User (ticket.userEmail)
     await transporter.sendMail({
-      from: `"Naivadyam Customer Care" <${smtpUser}>`,
+      from: `"Naivadyam Customer Care" <${storeEmail}>`,
       to: ticket.userEmail,
       subject: `Support Ticket #${ticketIdStr} Received: ${ticket.subject}`,
       text: `Namaste ${ticket.userName},\n\nWe have received your support ticket #${ticketIdStr}.\n\nSubject: ${ticket.subject}\nPriority: ${ticket.priority}\nMessage: ${ticket.message}\n\nOur team is reviewing your ticket and will respond shortly.\n\n— Team Naivadyam\nnaivyadyamtds@gmail.com | +91 8149471804`,
@@ -352,17 +350,13 @@ const sendTicketCreatedNotification = async (ticket) => {
  * Send Email Notification when Admin responds to a Support Ticket
  */
 const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
-
-  if (!smtpUser || !smtpPass) return { success: false };
-
   try {
-    const transporter = createMailTransporter(smtpUser, smtpPass);
+    const transporter = createMailTransporter();
     const ticketIdStr = ticket._id ? ticket._id.toString().slice(-6).toUpperCase() : 'TK';
+    const storeEmail = 'naivyadyamtds@gmail.com';
 
     await transporter.sendMail({
-      from: `"Naivadyam Customer Support" <${smtpUser}>`,
+      from: `"Naivadyam Customer Support" <${storeEmail}>`,
       to: ticket.userEmail,
       subject: `Update on Ticket #${ticketIdStr}: ${ticket.subject}`,
       text: `Namaste ${ticket.userName},\n\nOur support team has updated your ticket #${ticketIdStr}.\n\nNew Status: ${newStatus || ticket.status}\nResponse from Naivadyam Support:\n${adminReply}\n\n— Team Naivadyam\nnaivyadyamtds@gmail.com | +91 8149471804`,
@@ -400,17 +394,11 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
  * Send Password Reset Email with 6-digit OTP code
  */
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-
-  if (!smtpUser || !smtpPass) {
-    console.warn(`[Password Reset Warning] SMTP credentials not set. Generated Reset OTP: ${otpCode} for ${toEmail}`);
-    return { success: false, fallback: true, message: 'SMTP credentials missing in .env' };
-  }
+  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
 
   try {
-    const transporter = createMailTransporter(smtpUser, smtpPass);
+    const transporter = createMailTransporter();
     const firstName = (userName || 'Customer').split(' ')[0];
 
     const textContent = `
@@ -493,8 +481,8 @@ naivadyam.in | Helpline: +91 8149471804
 </html>`;
 
     const info = await transporter.sendMail({
-      from: `"${fromName}" <${smtpUser}>`,
-      replyTo: smtpUser,
+      from: `"${fromName}" <${fromEmail}>`,
+      replyTo: fromEmail,
       to: toEmail,
       subject: `${otpCode} is your Naivadyam Password Reset Code`,
       text: textContent,
