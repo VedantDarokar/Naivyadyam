@@ -209,12 +209,12 @@ const AdminProductsPage = () => {
 
       {/* Add / Edit Product Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xl space-y-4 text-xs text-slate-300 relative">
-            <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 text-slate-400">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xl space-y-4 text-xs text-slate-300 relative my-auto max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-white pt-1">
               {editProduct ? 'Edit Product' : 'Add New Product'}
             </h3>
             <form onSubmit={handleSaveProduct} className="space-y-3">

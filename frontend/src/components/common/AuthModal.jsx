@@ -156,9 +156,9 @@ const AuthModal = ({ isOpen, onClose }) => {
           resetForm();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/75 backdrop-blur-md p-4 overflow-y-auto animate-fade-in"
     >
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative my-auto max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="bg-gradient-to-br from-[#5A0E0E] via-[#7B1A1A] to-[#3D1206] p-6 text-white relative overflow-hidden">
