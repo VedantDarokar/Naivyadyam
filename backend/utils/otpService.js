@@ -2,15 +2,23 @@ const nodemailer = require('nodemailer');
 
 /**
  * Helper to create cloud-compatible Nodemailer Transporter
- * Uses service: 'gmail' (Port 465 SSL) to bypass cloud provider port 587 firewalls
+ * Uses host: 'smtp.gmail.com', port: 465 SSL, with 10s connection timeouts
  */
 const createMailTransporter = (smtpUser, smtpPass) => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user: smtpUser.trim(),
       pass: smtpPass.trim().replace(/\s+/g, '')
-    }
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 };
 
