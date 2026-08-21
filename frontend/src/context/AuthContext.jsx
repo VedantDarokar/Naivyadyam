@@ -58,7 +58,10 @@ export const AuthProvider = ({ children }) => {
   const sendRegistrationOtp = async (name, email, phone) => {
     try {
       const { data } = await api.post('/auth/send-registration-otp', { name, email, phone });
-      showToast('Verification code sent to your email!', 'success');
+      const msg = data.devOtp
+        ? `Verification Code: ${data.devOtp} (Cloud SMTP blocked by Gmail)`
+        : 'Verification code sent to your email!';
+      showToast(msg, 'success');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to send verification codes';
@@ -134,7 +137,10 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (email) => {
     try {
       const { data } = await api.post('/auth/forgot-password', { email });
-      showToast('Password reset code sent to your email!', 'success');
+      const msg = data.devOtp
+        ? `Password Reset Code: ${data.devOtp} (Cloud SMTP blocked by Gmail)`
+        : 'Password reset code sent to your email!';
+      showToast(msg, 'success');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Error requesting password reset';

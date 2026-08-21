@@ -56,12 +56,13 @@ const sendRegistrationOtp = async (req, res) => {
     console.log(`======================================================\n`);
 
     // Dispatch Real Email OTP
-    sendRealEmailOtp(cleanEmail, emailOtp, name || 'Valued Customer');
+    const emailRes = await sendRealEmailOtp(cleanEmail, emailOtp, name || 'Valued Customer');
 
     return res.json({
       message: 'Verification code sent to your email address',
       email: cleanEmail,
-      phone: cleanPhone
+      phone: cleanPhone,
+      devOtp: emailRes.success ? undefined : emailOtp
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -577,11 +578,12 @@ const forgotPassword = async (req, res) => {
     console.log(`======================================================\n`);
 
     // Send Real Password Reset Email
-    sendPasswordResetEmail(cleanEmail, resetOtp, userName);
+    const emailRes = await sendPasswordResetEmail(cleanEmail, resetOtp, userName);
 
     return res.json({
       message: 'Password reset code sent to your email address',
-      email: cleanEmail
+      email: cleanEmail,
+      devOtp: emailRes.success ? undefined : resetOtp
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
