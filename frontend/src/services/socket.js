@@ -11,12 +11,21 @@ const getSocketUrl = () => {
   return 'http://localhost:5000';
 };
 
+// Create socket but don't auto-connect — we delay first connection
+// so Render's free-tier server has time to wake up after a cold start.
 export const socket = io(getSocketUrl(), {
-  autoConnect: true,
+  autoConnect: false,
   reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 2000,
-  timeout: 20000,
+  reconnectionAttempts: 3,        // Don't spam retries
+  reconnectionDelay: 5000,        // 5s between attempts
+  reconnectionDelayMax: 15000,    // Cap at 15s
+  timeout: 15000,
   withCredentials: true,
-  transports: ['polling', 'websocket']
+  transports: ['websocket', 'polling']  // Prefer WebSocket first
 });
+
+// Delay initial connection by 4 seconds to allow Render cold-start to finish
+setTimeout(() => {
+  socket.connect();
+}, 4000);
+
