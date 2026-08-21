@@ -60,17 +60,15 @@ if (process.env.CLIENT_URL) {
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
+      callback(null, origin || 'https://naivyadyam.vercel.app');
     } else {
-      callback(null, true); // Fallback allow in production to prevent CORS lockouts
+      callback(null, origin || 'https://naivyadyam.vercel.app');
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-
-
 
 // 4. Rate Limiting Protection (Behind Proxy)
 const generalApiLimiter = rateLimit({
@@ -105,7 +103,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      callback(null, true);
+      callback(null, origin || 'https://naivyadyam.vercel.app');
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
