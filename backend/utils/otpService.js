@@ -1,16 +1,23 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Send real Email OTP using Nodemailer (Gmail / custom SMTP)
- * Anti-spam best practices applied:
- *  - Both HTML + plain-text versions sent (multipart/alternative)
- *  - Proper Reply-To and X-Mailer headers
- *  - Subject line avoids spam trigger words
- *  - Sender display name is human-readable
+ * Helper to create cloud-compatible Nodemailer Transporter
+ * Uses service: 'gmail' (Port 465 SSL) to bypass cloud provider port 587 firewalls
+ */
+const createMailTransporter = (smtpUser, smtpPass) => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: smtpUser.trim(),
+      pass: smtpPass.trim().replace(/\s+/g, '')
+    }
+  });
+};
+
+/**
+ * Send real Email OTP using Nodemailer
  */
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
@@ -22,22 +29,9 @@ const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') 
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, '')
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
+    const transporter = createMailTransporter(smtpUser, smtpPass);
     const firstName = (userName || 'Customer').split(' ')[0];
 
-    // Plain text version (critical for avoiding spam)
     const textContent = `
 Namaste ${firstName},
 
@@ -53,7 +47,6 @@ If you did not request this, please ignore this email.
 naivadyam.in | 100% Pure Vegetarian
     `.trim();
 
-    // HTML version
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -194,16 +187,14 @@ const sendRealSmsOtp = async (toPhone, otpCode) => {
     }
   }
 
-  console.warn(`[OTP SMS Warning] SMS provider credentials (TWILIO_ACCOUNT_SID or FAST2SMS_API_KEY) missing in .env. Generated Mobile OTP: ${otpCode} for ${toPhone}`);
+  console.warn(`[OTP SMS Warning] SMS provider credentials missing in .env. Generated Mobile OTP: ${otpCode} for ${toPhone}`);
   return { success: false, fallback: true, message: 'SMS credentials missing in .env' };
 };
 
 /**
- * Send Customer Contact Inquiry Email to store inbox & send confirmation to customer
+ * Send Customer Contact Inquiry Email
  */
 const sendContactInquiryEmail = async ({ name, email, phone, subject, message }) => {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
@@ -213,17 +204,7 @@ const sendContactInquiryEmail = async ({ name, email, phone, subject, message })
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, '')
-      },
-      tls: { rejectUnauthorized: false }
-    });
-
+    const transporter = createMailTransporter(smtpUser, smtpPass);
     const cleanSubject = subject || 'General Query';
 
     // 1. Email sent to official store inbox naivyadyamtds@gmail.com
@@ -286,8 +267,6 @@ const sendContactInquiryEmail = async ({ name, email, phone, subject, message })
  * Send Email Notification when a new Support Ticket is created
  */
 const sendTicketCreatedNotification = async (ticket) => {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
@@ -297,17 +276,7 @@ const sendTicketCreatedNotification = async (ticket) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, '')
-      },
-      tls: { rejectUnauthorized: false }
-    });
-
+    const transporter = createMailTransporter(smtpUser, smtpPass);
     const ticketIdStr = ticket._id ? ticket._id.toString().slice(-6).toUpperCase() : 'TK' + Date.now().toString().slice(-4);
 
     // 1. Email to Admin (naivyadyamtds@gmail.com)
@@ -375,25 +344,13 @@ const sendTicketCreatedNotification = async (ticket) => {
  * Send Email Notification when Admin responds to a Support Ticket
  */
 const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
 
   if (!smtpUser || !smtpPass) return { success: false };
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, '')
-      },
-      tls: { rejectUnauthorized: false }
-    });
-
+    const transporter = createMailTransporter(smtpUser, smtpPass);
     const ticketIdStr = ticket._id ? ticket._id.toString().slice(-6).toUpperCase() : 'TK';
 
     await transporter.sendMail({
@@ -435,8 +392,6 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
  * Send Password Reset Email with 6-digit OTP code
  */
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
-  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || 'naivyadyamtds@gmail.com';
   const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ywqu lsxj vfvl colf';
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
@@ -447,17 +402,7 @@ const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Custo
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, '')
-      },
-      tls: { rejectUnauthorized: false }
-    });
-
+    const transporter = createMailTransporter(smtpUser, smtpPass);
     const firstName = (userName || 'Customer').split(' ')[0];
 
     const textContent = `
