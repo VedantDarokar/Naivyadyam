@@ -70,7 +70,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-app.options('*', cors());
+
 
 // 4. Rate Limiting Protection (Behind Proxy)
 const generalApiLimiter = rateLimit({
