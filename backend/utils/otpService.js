@@ -1,6 +1,14 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 
+const getVerifiedSenderEmail = () => {
+  const from = process.env.EMAIL_FROM;
+  if (from && !from.includes('smtp-brevo.com') && from.includes('@')) {
+    return from.trim();
+  }
+  return 'naivyadyamtds@gmail.com';
+};
+
 /**
  * Send email via Brevo Transactional Email HTTP API (v3)
  * This avoids SMTP port 587 which is blocked on Render's free tier.
@@ -10,10 +18,13 @@ const sendViaBrevoApi = async ({ to, toName, subject, htmlContent, textContent, 
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey || !apiKey.startsWith('xkeysib-')) return null; // No valid API key, fall back to SMTP
 
+  const verifiedSender = (fromEmail && !fromEmail.includes('smtp-brevo.com')) ? fromEmail : 'naivyadyamtds@gmail.com';
+  const verifiedName = fromName || process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
+
   const response = await axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
-      sender: { name: fromName, email: fromEmail },
+      sender: { name: verifiedName, email: verifiedSender },
       to: [{ email: to, name: toName || to }],
       subject,
       htmlContent,
