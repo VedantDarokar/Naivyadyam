@@ -1,8 +1,40 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 /**
- * Helper to create cloud-compatible Nodemailer Transporter
- * Reads SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS from Environment Variables
+ * Send email via Brevo Transactional Email HTTP API (v3)
+ * This avoids SMTP port 587 which is blocked on Render's free tier.
+ * Requires BREVO_API_KEY env variable.
+ */
+const sendViaBrevoApi = async ({ to, toName, subject, htmlContent, textContent, fromName, fromEmail }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return null; // No API key, fall back to SMTP
+
+  const response = await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: { name: fromName, email: fromEmail },
+      to: [{ email: to, name: toName || to }],
+      subject,
+      htmlContent,
+      textContent
+    },
+    {
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      timeout: 15000
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Helper to create SMTP Nodemailer Transporter (fallback)
+ * Used only when BREVO_API_KEY is not set.
  */
 const createMailTransporter = () => {
   const host = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
@@ -11,64 +43,40 @@ const createMailTransporter = () => {
   const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim().replace(/\s+/g, '');
 
   if (!user || !pass) {
-    // Fallback to local transport if credentials missing
     return nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
-      auth: {
-        user: 'naivyadyamtds@gmail.com',
-        pass: 'ywqu lsxj vfvl colf'
-      }
-    });
-  }
-
-  if (host.includes('brevo.com') || user.includes('smtp-brevo.com')) {
-    return nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: port,
-      secure: false,
-      auth: { user, pass }
+      auth: { user: 'naivyadyamtds@gmail.com', pass: 'ywqu lsxj vfvl colf' },
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 8000
     });
   }
 
   return nodemailer.createTransport({
     host: host,
     port: port,
-    secure: port === 465,
+    secure: false,
     auth: { user, pass },
-    tls: { rejectUnauthorized: false }
+    tls: { rejectUnauthorized: false },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000
   });
 };
 
 /**
- * Send real Email OTP using Nodemailer
+ * Send real Email OTP — tries Brevo HTTP API first, falls back to SMTP
  */
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  // Use SMTP_USER as the verified sender in Brevo — must match a verified domain/sender
   const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
+  const firstName = (userName || 'Customer').split(' ')[0];
 
-  try {
-    const transporter = createMailTransporter();
-    const firstName = (userName || 'Customer').split(' ')[0];
+  const textContent = `Namaste ${firstName},\n\nYour Naivadyam verification code is: ${otpCode}\n\nThis code expires in 10 minutes. Do not share it.\n\n— Team Naivadyam`;
 
-    const textContent = `
-Namaste ${firstName},
-
-Your Naivadyam account verification code is:
-
-${otpCode}
-
-This code expires in 10 minutes. Do not share it with anyone.
-
-If you did not request this, please ignore this email.
-
-— Team Naivadyam
-naivadyam.in | 100% Pure Vegetarian
-    `.trim();
-
-    const htmlContent = `<!DOCTYPE html>
+  const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -80,7 +88,6 @@ naivadyam.in | 100% Pure Vegetarian
     <tr>
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #ddd0b0;max-width:520px;">
-
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#5A0E0E 0%,#7B1A1A 100%);padding:28px 24px;text-align:center;">
@@ -88,7 +95,6 @@ naivadyam.in | 100% Pure Vegetarian
               <p style="margin:6px 0 0;font-size:12px;color:#f5e0b3;letter-spacing:0.5px;">The Divine Serve &nbsp;·&nbsp; 100% Pure Vegetarian</p>
             </td>
           </tr>
-
           <!-- Body -->
           <tr>
             <td style="padding:32px 32px 24px;">
@@ -96,8 +102,6 @@ naivadyam.in | 100% Pure Vegetarian
               <p style="margin:0 0 24px;font-size:14px;color:#5a3d28;line-height:1.6;">
                 To complete your registration at Naivadyam, please use the verification code below:
               </p>
-
-              <!-- OTP Box -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:8px 0 24px;">
@@ -107,31 +111,20 @@ naivadyam.in | 100% Pure Vegetarian
                   </td>
                 </tr>
               </table>
-
               <p style="margin:0;font-size:12px;color:#8c6a50;text-align:center;background:#faf5ed;padding:12px;border-radius:8px;">
                 ⏱ This code is valid for <strong>10 minutes</strong> and can only be used once.<br>
                 Do not share this code with anyone.
               </p>
             </td>
           </tr>
-
-          <!-- Divider -->
           <tr>
-            <td style="padding:0 32px;">
-              <hr style="border:none;border-top:1px solid #ebdcb8;">
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding:20px 32px;text-align:center;">
+            <td style="padding:20px 32px;text-align:center;border-top:1px solid #ebdcb8;">
               <p style="margin:0;font-size:11px;color:#a08070;line-height:1.6;">
                 If you did not create a Naivadyam account, please ignore this email.<br>
                 &copy; ${new Date().getFullYear()} Naivadyam &nbsp;·&nbsp; naivadyam.in
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -139,25 +132,41 @@ naivadyam.in | 100% Pure Vegetarian
 </body>
 </html>`;
 
+  // 1. Try Brevo HTTP API first (works on Render free tier — no SMTP port needed)
+  try {
+    const apiResult = await sendViaBrevoApi({
+      to: toEmail,
+      toName: userName,
+      subject: `${otpCode} is your Naivadyam verification code`,
+      htmlContent,
+      textContent,
+      fromName,
+      fromEmail
+    });
+    if (apiResult !== null) {
+      console.log(`✅ [Brevo API OTP Sent] to ${toEmail}`);
+      return { success: true };
+    }
+  } catch (apiErr) {
+    console.warn(`⚠️ [Brevo API Error] ${apiErr.response?.data?.message || apiErr.message} — falling back to SMTP`);
+  }
+
+  // 2. Fallback: SMTP (may be blocked on Render free tier)
+  try {
+    const transporter = createMailTransporter();
     const info = await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
       replyTo: fromEmail,
       to: toEmail,
       subject: `${otpCode} is your Naivadyam verification code`,
       text: textContent,
-      html: htmlContent,
-      headers: {
-        'X-Mailer': 'Naivadyam Mailer v1',
-        'X-Priority': '1',
-        'Importance': 'high'
-      }
+      html: htmlContent
     });
-
-    console.log(`✅ [Real Email OTP Sent] MessageID: ${info.messageId} to ${toEmail}`);
+    console.log(`✅ [SMTP OTP Sent] MessageID: ${info.messageId} to ${toEmail}`);
     return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`❌ [Real Email OTP Error] ${error.message}`);
-    return { success: false, error: error.message };
+  } catch (smtpErr) {
+    console.error(`❌ [SMTP OTP Error] ${smtpErr.message}`);
+    return { success: false, error: smtpErr.message };
   }
 };
 
