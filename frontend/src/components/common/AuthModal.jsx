@@ -96,9 +96,6 @@ const AuthModal = ({ isOpen, onClose }) => {
     const res = await sendRegistrationOtp(name, email, phone);
     setLoading(false);
     if (res.success) {
-      if (res.devOtp) {
-        setEmailOtp(res.devOtp);
-      }
       setRegStep(2);
     }
   };
@@ -124,9 +121,6 @@ const AuthModal = ({ isOpen, onClose }) => {
     const res = await forgotPassword(email);
     setLoading(false);
     if (res.success) {
-      if (res.devOtp) {
-        setResetOtp(res.devOtp);
-      }
       setIsResetStep(true);
     }
   };

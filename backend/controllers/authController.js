@@ -58,11 +58,16 @@ const sendRegistrationOtp = async (req, res) => {
     // Dispatch Real Email OTP
     const emailRes = await sendRealEmailOtp(cleanEmail, emailOtp, name || 'Valued Customer');
 
+    if (!emailRes.success) {
+      return res.status(500).json({
+        message: 'Failed to send verification email. Please check your email address and try again.'
+      });
+    }
+
     return res.json({
       message: 'Verification code sent to your email address',
       email: cleanEmail,
-      phone: cleanPhone,
-      devOtp: emailRes.success ? undefined : emailOtp
+      phone: cleanPhone
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -583,7 +588,7 @@ const forgotPassword = async (req, res) => {
     return res.json({
       message: 'Password reset code sent to your email address',
       email: cleanEmail,
-      devOtp: emailRes.success ? undefined : resetOtp
+      // No devOtp in response for security
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

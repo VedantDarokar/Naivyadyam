@@ -46,7 +46,8 @@ const createMailTransporter = () => {
  */
 const sendRealEmailOtp = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
+  // Use SMTP_USER as the verified sender in Brevo — must match a verified domain/sender
+  const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
 
   try {
     const transporter = createMailTransporter();
@@ -395,7 +396,8 @@ const sendTicketReplyNotification = async (ticket, adminReply, newStatus) => {
  */
 const sendPasswordResetEmail = async (toEmail, otpCode, userName = 'Valued Customer') => {
   const fromName = process.env.EMAIL_FROM_NAME || 'Naivadyam — The Divine Serve';
-  const fromEmail = process.env.EMAIL_FROM || 'naivyadyamtds@gmail.com';
+  // Use SMTP_USER as the verified sender in Brevo — must match a verified domain/sender
+  const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'naivyadyamtds@gmail.com';
 
   try {
     const transporter = createMailTransporter();
