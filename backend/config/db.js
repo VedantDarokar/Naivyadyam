@@ -84,22 +84,22 @@ const seedDefaultProducts = async () => {
           ratings: { average: 4.9, count: 412 }
         },
         {
-          title: 'Instant Gulab Jamun Premix',
-          slug: 'instant-gulab-jamun-premix',
-          sku: 'NV-JAMUN-200',
-          description: 'Soft, melt-in-your-mouth Gulab Jamuns! Made from pure milk solids with saffron cardamon flavor.',
-          price: 110,
-          compareAtPrice: 140,
-          category: 'Sweets & Desserts',
-          subcategory: 'Dessert Premix',
+          title: 'Instant Bhajani Chakli Premix',
+          slug: 'instant-bhajani-chakli-premix',
+          sku: 'NV-CHAKLI-500',
+          description: 'Traditional Maharashtrian Bhajani Chakli Premix! Crispy, crunchy, and savory snack made from roasted grains and authentic spices.',
+          price: 120,
+          compareAtPrice: 150,
+          category: 'Instant Premix',
+          subcategory: 'Snack Premix',
           brand: 'Naivadyam',
-          images: ['/product-gulabjamun.jpg'],
+          images: ['/product-chakli.jpg'],
           stock: 200,
-          weight: '200g',
+          weight: '500g',
           isFeatured: true,
           isDealOfDay: false,
-          discountPercentage: 21,
-          ratings: { average: 4.8, count: 530 }
+          discountPercentage: 20,
+          ratings: { average: 4.9, count: 530 }
         }
       ];
       await Product.insertMany(defaultProducts);
