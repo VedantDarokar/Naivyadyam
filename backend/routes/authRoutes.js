@@ -9,7 +9,10 @@ const {
   updateUserProfile,
   addAddress,
   deleteAddress,
-  toggleWishlist
+  toggleWishlist,
+  sendContactInquiry,
+  forgotPassword,
+  resetPassword
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -17,6 +20,9 @@ router.post('/send-registration-otp', sendRegistrationOtp);
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/google', googleAuth);
+router.post('/contact', sendContactInquiry);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 router.post('/address', protect, addAddress);

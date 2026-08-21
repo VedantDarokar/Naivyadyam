@@ -3,11 +3,12 @@ const { generateToken } = require('../middleware/authMiddleware');
 const mongoose = require('mongoose');
 const memoryStore = require('../config/memoryStore');
 const bcrypt = require('bcryptjs');
-const { sendRealEmailOtp, sendRealSmsOtp } = require('../utils/otpService');
+const { sendRealEmailOtp, sendRealSmsOtp, sendContactInquiryEmail, sendPasswordResetEmail } = require('../utils/otpService');
 
 const isDbReady = () => mongoose.connection.readyState === 1;
 
 const pendingRegistrationOtps = new Map();
+const passwordResetOtps = new Map();
 
 // @desc Send OTP for Email and Phone Verification
 // @route POST /api/auth/send-registration-otp
@@ -511,6 +512,138 @@ const toggleWishlist = async (req, res) => {
   }
 };
 
+// @desc Send Contact Form Inquiry Email
+// @route POST /api/auth/contact
+const sendContactInquiry = async (req, res) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ message: 'Please provide all required fields (name, email, message)' });
+    }
+
+    const result = await sendContactInquiryEmail({ name, email, phone, subject, message });
+    if (result.success) {
+      return res.json({ message: 'Inquiry submitted successfully! A confirmation email has been sent.' });
+    } else {
+      return res.status(500).json({ message: result.error || 'Failed to send inquiry email' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Send Forgot Password Reset OTP to Email
+// @route POST /api/auth/forgot-password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide your registered email address' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    let userName = 'Valued Customer';
+    let userFound = false;
+
+    if (isDbReady()) {
+      const user = await User.findOne({ email: cleanEmail });
+      if (user) {
+        userName = user.name;
+        userFound = true;
+      }
+    } else {
+      const user = memoryStore.users.find(u => u.email.toLowerCase() === cleanEmail);
+      if (user) {
+        userName = user.name;
+        userFound = true;
+      }
+    }
+
+    if (!userFound) {
+      return res.status(404).json({ message: 'No account registered with this email address' });
+    }
+
+    const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    passwordResetOtps.set(cleanEmail, {
+      otp: resetOtp,
+      expiresAt
+    });
+
+    console.log(`\n======================================================`);
+    console.log(`[NAIVADYAM FORGOT PASSWORD RESET OTP DISPATCH LOG]`);
+    console.log(`Recipient Email: ${cleanEmail} -> Reset OTP: ${resetOtp}`);
+    console.log(`======================================================\n`);
+
+    // Send Real Password Reset Email
+    sendPasswordResetEmail(cleanEmail, resetOtp, userName);
+
+    return res.json({
+      message: 'Password reset code sent to your email address',
+      email: cleanEmail
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Reset Password with Verified OTP
+// @route POST /api/auth/reset-password
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Please provide email, verification code, and new password' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const record = passwordResetOtps.get(cleanEmail);
+
+    if (!record) {
+      return res.status(400).json({ message: 'No reset request found for this email. Please request a new code.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      passwordResetOtps.delete(cleanEmail);
+      return res.status(400).json({ message: 'Verification code has expired. Please request a new code.' });
+    }
+
+    if (otp.trim() !== record.otp) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    // Clear OTP record
+    passwordResetOtps.delete(cleanEmail);
+
+    if (isDbReady()) {
+      const user = await User.findOne({ email: cleanEmail });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      user.password = newPassword;
+      await user.save();
+    } else {
+      const user = memoryStore.users.find(u => u.email.toLowerCase() === cleanEmail);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      user.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    return res.json({ message: 'Password reset successful! You can now sign in with your new password.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   sendRegistrationOtp,
   registerUser,
@@ -520,6 +653,9 @@ module.exports = {
   updateUserProfile,
   addAddress,
   deleteAddress,
-  toggleWishlist
+  toggleWishlist,
+  sendContactInquiry,
+  forgotPassword,
+  resetPassword
 };
 

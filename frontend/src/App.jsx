@@ -7,6 +7,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import AuthModal from './components/common/AuthModal';
 import NotificationToast from './components/common/NotificationToast';
+import CustomerSupportWidget from './components/common/CustomerSupportWidget';
 
 import HomePage from './pages/customer/HomePage';
 import CatalogPage from './pages/customer/CatalogPage';
@@ -16,6 +17,13 @@ import CartPage from './pages/customer/CartPage';
 import CheckoutPage from './pages/customer/CheckoutPage';
 import OrderTrackingPage from './pages/customer/OrderTrackingPage';
 import UserProfilePage from './pages/customer/UserProfilePage';
+
+import ReturnPolicyPage from './pages/customer/ReturnPolicyPage';
+import RefundPolicyPage from './pages/customer/RefundPolicyPage';
+import PrivacyPolicyPage from './pages/customer/PrivacyPolicyPage';
+import DisclaimerPage from './pages/customer/DisclaimerPage';
+import AboutUsPage from './pages/customer/AboutUsPage';
+import ContactUsPage from './pages/customer/ContactUsPage';
 
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -88,9 +96,23 @@ function AppContent() {
                   <Route path="/checkout" element={<CheckoutPage onOpenAuthModal={() => setAuthModalOpen(true)} />} />
                   <Route path="/order-tracking/:id" element={<OrderTrackingPage />} />
                   <Route path="/profile" element={<UserProfilePage />} />
+                  
+                  {/* Legal & Information Routes */}
+                  <Route path="/return-policy" element={<ReturnPolicyPage />} />
+                  <Route path="/returns" element={<ReturnPolicyPage />} />
+                  <Route path="/refund-policy" element={<RefundPolicyPage />} />
+                  <Route path="/refunds" element={<RefundPolicyPage />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                  <Route path="/disclaimer" element={<DisclaimerPage />} />
+                  <Route path="/about-us" element={<AboutUsPage />} />
+                  <Route path="/about" element={<AboutUsPage />} />
+                  <Route path="/contact-us" element={<ContactUsPage />} />
+                  <Route path="/contact" element={<ContactUsPage />} />
                 </Routes>
               </main>
               <Footer />
+              <CustomerSupportWidget />
               <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
             </>
           }

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const memoryStore = require('../config/memoryStore');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'naivadyam_super_secret_jwt_key_2026';
+const JWT_EXPIRE = process.env.JWT_EXPIRE || '30d';
 
 const protect = async (req, res, next) => {
   let token;
@@ -49,7 +50,7 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-  if (req.user) {
+  if (req.user && req.user.role === 'admin') {
     next();
   } else {
     res.status(403).json({ message: 'Access denied: Admin authorization required' });
@@ -57,7 +58,7 @@ const admin = (req, res, next) => {
 };
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 };
 
-module.exports = { protect, admin, generateToken, JWT_SECRET };
+module.exports = { protect, admin, generateToken, JWT_SECRET, JWT_EXPIRE };

@@ -120,18 +120,18 @@ const UserProfilePage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
         {/* Sidebar Tabs */}
-        <div className="space-y-1">
+        <div className="flex flex-row overflow-x-auto lg:flex-col lg:space-y-1 gap-2 lg:gap-0 pb-2 lg:pb-0 scrollbar-none">
           {TABS.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-left transition-all ${
-                activeTab === tab.id ? 'bg-[#7B1A1A] text-[#F5C518]' : 'text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-[#231508]'
+              className={`flex-shrink-0 lg:w-full flex items-center gap-2.5 px-4 py-2.5 lg:py-3 rounded-xl text-xs sm:text-sm font-semibold text-left transition-all ${
+                activeTab === tab.id ? 'bg-[#7B1A1A] text-[#F5C518] shadow-md' : 'bg-amber-50 dark:bg-[#1A0E08] lg:bg-transparent text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-[#231508]'
               }`}>
               <span className={activeTab === tab.id ? 'text-[#E6A817]' : 'text-amber-600 dark:text-amber-400'}>{tab.icon}</span>
-              {tab.label}
+              <span className="whitespace-nowrap">{tab.label}</span>
             </button>
           ))}
-          <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-left mt-2">
-            Sign Out
+          <button onClick={logout} className="flex-shrink-0 lg:w-full flex items-center gap-2.5 px-4 py-2.5 lg:py-3 rounded-xl text-xs sm:text-sm font-semibold text-rose-600 bg-rose-50/50 dark:bg-rose-950/20 lg:bg-transparent hover:bg-rose-100 dark:hover:bg-rose-950/40 text-left lg:mt-2">
+            <span className="whitespace-nowrap">Sign Out</span>
           </button>
         </div>
 
@@ -229,25 +229,82 @@ const UserProfilePage = () => {
           {/* Support Tab */}
           {activeTab === 'tickets' && (
             <div className="space-y-4">
-              <h2 className="text-base font-black text-amber-950 dark:text-amber-50">Support Tickets</h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-black text-amber-950 dark:text-amber-50">Support Tickets & Inquiries</h2>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-400/80">Track support desk status & official staff responses</p>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="space-y-3">{[...Array(2)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-amber-50 dark:bg-[#1A0E08] animate-pulse"></div>)}</div>
               ) : tickets.length === 0 ? (
-                <div className="text-center py-16 space-y-3">
+                <div className="text-center py-16 space-y-3 border border-dashed border-amber-200 dark:border-[#3D2010] rounded-2xl">
                   <Ticket className="w-12 h-12 text-amber-300 mx-auto" />
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">No tickets yet</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">Email us at hello@naivadyam.com for support</p>
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">No support tickets found</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Click the floating headphones icon at the bottom right to raise a support ticket.</p>
                 </div>
               ) : (
-                tickets.map((t) => (
-                  <div key={t._id} className="card-product p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-amber-950 dark:text-amber-50">{t.subject}</p>
-                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded border capitalize ${t.status === 'resolved' ? 'bg-[#1D7A40]/10 text-[#1D7A40] border-[#1D7A40]/30' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>{t.status}</span>
-                    </div>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 line-clamp-2">{t.description}</p>
-                  </div>
-                ))
+                <div className="space-y-4">
+                  {tickets.map((t) => {
+                    const ticketIdStr = t._id ? t._id.toString().slice(-6).toUpperCase() : 'TK';
+                    const formattedDate = t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+                    return (
+                      <div key={t._id} className="card-product p-5 space-y-3 border border-amber-200/80 dark:border-[#3D2010]">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-100 dark:border-[#2A1A0C] pb-3">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">#{ticketIdStr}</span>
+                              <h3 className="text-sm font-bold text-amber-950 dark:text-amber-50">{t.subject}</h3>
+                            </div>
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400">Submitted on {formattedDate} {t.orderId ? `· Order: #${t.orderId}` : ''}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase border ${
+                              t.priority === 'Urgent' || t.priority === 'High'
+                                ? 'bg-rose-500/10 text-rose-600 border-rose-500/30'
+                                : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+                            }`}>
+                              {t.priority || 'Medium'} Priority
+                            </span>
+                            <span className={`px-2.5 py-0.5 text-[10px] font-black rounded-full uppercase border ${
+                              t.status === 'Resolved' || t.status === 'resolved'
+                                ? 'bg-[#1D7A40]/10 text-[#1D7A40] border-[#1D7A40]/30'
+                                : t.status === 'In Progress'
+                                ? 'bg-blue-500/10 text-blue-600 border-blue-500/30'
+                                : 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+                            }`}>
+                              {t.status || 'Open'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Customer Message */}
+                        <div className="text-xs text-amber-900/90 dark:text-amber-200/90 bg-amber-50/50 dark:bg-[#1A0E08] p-3 rounded-xl border border-amber-100 dark:border-[#231208]">
+                          <p className="font-bold text-[10px] text-amber-700 dark:text-amber-400 mb-1">Your Issue Description:</p>
+                          <p className="whitespace-pre-wrap">{t.message || t.description}</p>
+                        </div>
+
+                        {/* Official Support Response */}
+                        {t.response ? (
+                          <div className="p-4 bg-[#1D7A40]/5 border border-[#1D7A40]/30 rounded-xl space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-[#1D7A40]">
+                              <Leaf className="w-4 h-4" /> Official Response from Naivadyam Care
+                            </div>
+                            <p className="text-xs text-amber-950 dark:text-amber-100 whitespace-pre-wrap leading-relaxed">
+                              {t.response}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-2.5 bg-amber-50/30 dark:bg-[#150A04] rounded-lg text-[10px] text-amber-600 dark:text-amber-400 italic">
+                            ⏳ Support desk has received your ticket. Expected response within 4 hours.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}

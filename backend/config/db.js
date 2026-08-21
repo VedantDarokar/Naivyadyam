@@ -11,7 +11,7 @@ const seedAdminUser = async () => {
         email: 'admin@naivadyam.com',
         password: 'adminpassword123',
         role: 'admin',
-        phone: '9876543210',
+        phone: '8149471804',
         avatar: 'https://ui-avatars.com/api/?name=Admin&background=7B1A1A&color=F5C518&bold=true',
         isEmailVerified: true,
         isPhoneVerified: true

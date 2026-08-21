@@ -5,8 +5,39 @@ const Coupon = require('../models/Coupon');
 const Ticket = require('../models/Ticket');
 const mongoose = require('mongoose');
 const memoryStore = require('../config/memoryStore');
+const { sendTicketReplyNotification } = require('../utils/otpService');
 
 const isDbReady = () => mongoose.connection.readyState === 1;
+
+// Helper to calculate real monthly sales dynamically from actual orders
+const calculateRealMonthlySales = (allOrders) => {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const now = new Date();
+  const months = [];
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      year: d.getFullYear(),
+      monthIndex: d.getMonth(),
+      monthLabel: monthNames[d.getMonth()],
+      sales: 0
+    });
+  }
+
+  allOrders.forEach(order => {
+    if (order.paymentStatus === 'Paid' || order.orderStatus === 'Delivered') {
+      const orderDate = new Date(order.createdAt || Date.now());
+      const amount = order.priceBreakup?.total || order.totalAmount || 0;
+      const target = months.find(m => m.year === orderDate.getFullYear() && m.monthIndex === orderDate.getMonth());
+      if (target) {
+        target.sales += amount;
+      }
+    }
+  });
+
+  return months.map(m => ({ month: m.monthLabel, sales: m.sales }));
+};
 
 // @desc Get Dashboard Analytics Stats
 // @route GET /api/admin/stats
@@ -16,20 +47,13 @@ const getDashboardStats = async (req, res) => {
       const totalOrders = await Order.countDocuments({});
       const totalCustomers = await User.countDocuments({ role: 'customer' });
       const totalProducts = await Product.countDocuments({});
-      const paidOrders = await Order.find({ paymentStatus: 'Paid' });
+      const allOrders = await Order.find({});
+      const paidOrders = allOrders.filter(o => o.paymentStatus === 'Paid' || o.orderStatus === 'Delivered');
       const totalRevenue = paidOrders.reduce((acc, item) => acc + (item.priceBreakup?.total || item.totalAmount || 0), 0);
       const lowStockProducts = await Product.find({ stock: { $lte: 5 } }).select('title stock price images category');
       const recentOrders = await Order.find({}).sort({ createdAt: -1 }).limit(5).populate('user', 'name email');
 
-      const monthlySales = [
-        { month: 'Jan', sales: 45000 },
-        { month: 'Feb', sales: 62000 },
-        { month: 'Mar', sales: 58000 },
-        { month: 'Apr', sales: 89000 },
-        { month: 'May', sales: 110000 },
-        { month: 'Jun', sales: 135000 },
-        { month: 'Jul', sales: totalRevenue > 0 ? totalRevenue : 150000 }
-      ];
+      const monthlySales = calculateRealMonthlySales(allOrders);
 
       return res.json({
         totalRevenue,
@@ -45,21 +69,12 @@ const getDashboardStats = async (req, res) => {
       const totalOrders = memoryStore.orders.length;
       const totalCustomers = memoryStore.users.filter(u => u.role === 'customer').length;
       const totalProducts = memoryStore.products.length;
-      const totalRevenue = memoryStore.orders
-        .filter(o => o.paymentStatus === 'Paid')
-        .reduce((acc, item) => acc + (item.priceBreakup?.total || 0), 1511);
+      const paidOrders = memoryStore.orders.filter(o => o.paymentStatus === 'Paid' || o.orderStatus === 'Delivered');
+      const totalRevenue = paidOrders.reduce((acc, item) => acc + (item.priceBreakup?.total || item.totalAmount || 0), 0);
       const lowStockProducts = memoryStore.products.filter(p => p.stock <= 5);
       const recentOrders = memoryStore.orders.slice(0, 5);
 
-      const monthlySales = [
-        { month: 'Jan', sales: 45000 },
-        { month: 'Feb', sales: 62000 },
-        { month: 'Mar', sales: 58000 },
-        { month: 'Apr', sales: 89000 },
-        { month: 'May', sales: 110000 },
-        { month: 'Jun', sales: 135000 },
-        { month: 'Jul', sales: totalRevenue }
-      ];
+      const monthlySales = calculateRealMonthlySales(memoryStore.orders);
 
       return res.json({
         totalRevenue,
@@ -200,16 +215,41 @@ const deleteCoupon = async (req, res) => {
   }
 };
 
-// @desc Get Tickets
+// @desc Get Tickets (Excluding soft deleted by admin)
 // @route GET /api/admin/tickets
 const getTickets = async (req, res) => {
   try {
     if (isDbReady()) {
-      const tickets = await Ticket.find({}).sort({ createdAt: -1 });
+      const tickets = await Ticket.find({ deletedByAdmin: { $ne: true } }).sort({ createdAt: -1 });
       return res.json(tickets);
     } else {
-      return res.json(memoryStore.tickets);
+      const tickets = (memoryStore.tickets || []).filter(t => !t.deletedByAdmin);
+      return res.json(tickets);
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Delete Ticket from Admin view (Stays in User profile)
+// @route DELETE /api/admin/tickets/:id
+const deleteTicketForAdmin = async (req, res) => {
+  try {
+    if (isDbReady()) {
+      const ticket = await Ticket.findById(req.params.id);
+      if (ticket) {
+        ticket.deletedByAdmin = true;
+        await ticket.save();
+        return res.json({ message: 'Ticket removed from admin view' });
+      }
+    } else {
+      const ticket = (memoryStore.tickets || []).find(t => t._id === req.params.id);
+      if (ticket) {
+        ticket.deletedByAdmin = true;
+        return res.json({ message: 'Ticket removed from admin view' });
+      }
+    }
+    res.status(404).json({ message: 'Ticket not found' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -220,23 +260,33 @@ const getTickets = async (req, res) => {
 const updateTicket = async (req, res) => {
   try {
     const { response, status } = req.body;
+    let targetTicket;
+
     if (isDbReady()) {
-      const ticket = await Ticket.findById(req.params.id);
-      if (ticket) {
-        if (response) ticket.response = response;
-        if (status) ticket.status = status;
-        await ticket.save();
-        return res.json(ticket);
+      targetTicket = await Ticket.findById(req.params.id);
+      if (targetTicket) {
+        if (response) targetTicket.response = response;
+        if (status) targetTicket.status = status;
+        await targetTicket.save();
       }
     } else {
-      const ticket = memoryStore.tickets.find(t => t._id === req.params.id);
-      if (ticket) {
-        if (response) ticket.response = response;
-        if (status) ticket.status = status;
-        return res.json(ticket);
+      targetTicket = memoryStore.tickets.find(t => t._id === req.params.id);
+      if (targetTicket) {
+        if (response) targetTicket.response = response;
+        if (status) targetTicket.status = status;
       }
     }
-    res.status(404).json({ message: 'Ticket not found' });
+
+    if (!targetTicket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+
+    // Send async email notification to customer about admin response / status change
+    sendTicketReplyNotification(targetTicket, response, status).catch(err => {
+      console.error('Ticket reply notification email error:', err.message);
+    });
+
+    return res.json(targetTicket);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -251,5 +301,6 @@ module.exports = {
   createCoupon,
   deleteCoupon,
   getTickets,
-  updateTicket
+  updateTicket,
+  deleteTicketForAdmin
 };

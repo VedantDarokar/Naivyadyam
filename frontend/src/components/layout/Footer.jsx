@@ -57,13 +57,15 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Company & Info */}
           <div>
-            <h4 className="text-xs font-black text-amber-100 mb-4 uppercase tracking-widest">Our Products</h4>
+            <h4 className="text-xs font-black text-amber-100 mb-4 uppercase tracking-widest">About Naivadyam</h4>
             <ul className="space-y-2.5 text-xs">
               {[
+                ['About Us', '/about-us'],
                 ['All Catalog', '/catalog'],
                 ['Instant Premix', '/premix'],
+                ['Contact Us', '/contact-us'],
               ].map(([label, path]) => (
                 <li key={label}>
                   <Link to={path} className="hover:text-[#E6A817] transition-colors flex items-center gap-1.5 group">
@@ -75,15 +77,16 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Customer Care */}
+          {/* Customer Care & Policies */}
           <div>
-            <h4 className="text-xs font-black text-amber-100 mb-4 uppercase tracking-widest">Customer Care</h4>
+            <h4 className="text-xs font-black text-amber-100 mb-4 uppercase tracking-widest">Customer Policies</h4>
             <ul className="space-y-2.5 text-xs">
               {[
+                ['Return Policy', '/return-policy'],
+                ['Refund Policy', '/refund-policy'],
+                ['Privacy Policy', '/privacy-policy'],
+                ['Disclaimer', '/disclaimer'],
                 ['Track My Order', '/profile?tab=orders'],
-                ['Raise Support Ticket', '/profile?tab=tickets'],
-                ['Shipping & Returns', '#shipping'],
-                ['Privacy Policy', '#privacy'],
               ].map(([label, path]) => (
                 <li key={label}>
                   <Link to={path} className="hover:text-[#E6A817] transition-colors flex items-center gap-1.5 group">
@@ -118,7 +121,7 @@ const Footer = () => {
               </form>
             )}
             <div className="flex items-center gap-2 text-[10px] text-amber-400/40">
-              <Mail className="w-3 h-3" /> hello@naivadyam.com
+              <Mail className="w-3 h-3" /> naivyadyamtds@gmail.com
             </div>
           </div>
         </div>

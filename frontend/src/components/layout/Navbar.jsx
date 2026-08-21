@@ -53,32 +53,32 @@ const Navbar = ({ onOpenAuthModal }) => {
     <header className={`sticky top-0 z-40 w-full transition-all duration-300 glass-surface ${scrolled ? 'shadow-xl shadow-[#7B1A1A]/10' : ''}`}>
 
       {/* Brand Announcement Stripe */}
-      <div className="brand-stripe text-amber-200 text-xs font-semibold py-2 px-4 text-center flex items-center justify-center gap-2">
-        <span className="text-yellow-300 text-base">🪔</span>
-        <span>
+      <div className="brand-stripe text-amber-200 text-[10px] sm:text-xs font-semibold py-1.5 px-3 text-center flex items-center justify-center gap-1.5 leading-tight overflow-hidden">
+        <span className="text-yellow-300 text-xs sm:text-sm shrink-0">🪔</span>
+        <span className="truncate sm:whitespace-normal">
           <strong>नैवेद्यम् — The Divine Serve</strong> &nbsp;|&nbsp;
-          100% Pure Vegetarian &nbsp;·&nbsp; Authentic Indian Recipes &nbsp;·&nbsp;
-          Extra 10% OFF with code <strong className="text-yellow-300 underline decoration-dotted">NAIVADYAM10</strong>
+          100% Pure Vegetarian &nbsp;·&nbsp;
+          Extra 10% OFF code <strong className="text-yellow-300 underline decoration-dotted">NAIVADYAM10</strong>
         </span>
-        <span className="text-yellow-300 text-base">🪔</span>
+        <span className="text-yellow-300 text-xs sm:text-sm shrink-0 hidden sm:inline">🪔</span>
       </div>
 
       {/* Gold Divider */}
       <div className="gold-divider"></div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center group flex-shrink-0">
+          <Link to="/" className="flex items-center group shrink-0">
             <img
               src="/naivadyam-logo.png"
               alt="Naivadyam — The Divine Serve"
-              className="h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+              className="h-10 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
             />
           </Link>
 
-          {/* Search Bar */}
+          {/* Search Bar (Desktop) */}
           <div className="hidden md:flex flex-1 max-w-lg relative">
             <form onSubmit={handleSearchSubmit} className="w-full">
               <input
@@ -121,11 +121,13 @@ const Navbar = ({ onOpenAuthModal }) => {
             )}
           </div>
 
-          {/* Nav Links */}
+          {/* Nav Links (Desktop) */}
           <nav className="hidden lg:flex items-center gap-6 text-sm font-bold">
             {[
               ['Catalog', '/catalog'],
               ['Instant Premix', '/premix'],
+              ['About Us', '/about-us'],
+              ['Contact', '/contact-us'],
             ].map(([label, path]) => (
               <Link key={path} to={path}
                 className="text-[#5A2D0C] dark:text-amber-200 hover:text-[#7B1A1A] dark:hover:text-[#E6A817] transition-colors relative group">
@@ -136,23 +138,23 @@ const Navbar = ({ onOpenAuthModal }) => {
           </nav>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
 
             <Link to="/profile?tab=wishlist"
-              className="p-2 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300 relative transition-colors">
-              <Heart className="w-5 h-5" />
+              className="p-1.5 sm:p-2 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300 relative transition-colors">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
               {wishlist.length > 0 && (
-                <span className="absolute top-0 right-0 w-4 h-4 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center">
+                <span className="absolute top-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-rose-600 text-white text-[9px] sm:text-[10px] font-black rounded-full flex items-center justify-center">
                   {wishlist.length}
                 </span>
               )}
             </Link>
 
             <Link to="/cart"
-              className="p-2 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300 relative transition-colors">
-              <ShoppingBag className="w-5 h-5" />
+              className="p-1.5 sm:p-2 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300 relative transition-colors">
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               {itemCount > 0 && (
-                <span className="absolute top-0 right-0 w-4 h-4 bg-[#E6A817] text-[#3D1206] text-[10px] font-black rounded-full flex items-center justify-center shadow">
+                <span className="absolute top-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#E6A817] text-[#3D1206] text-[9px] sm:text-[10px] font-black rounded-full flex items-center justify-center shadow">
                   {itemCount}
                 </span>
               )}
@@ -161,8 +163,8 @@ const Navbar = ({ onOpenAuthModal }) => {
             {user ? (
               <div className="relative">
                 <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] transition-colors border border-amber-200 dark:border-[#3D2010]">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7B1A1A] to-[#E6A817] text-[#F5C518] flex items-center justify-center font-black text-xs ring-2 ring-[#E6A817]/40 shadow flex-shrink-0">
+                  className="flex items-center gap-1.5 p-1 sm:p-1.5 rounded-full hover:bg-amber-100 dark:hover:bg-[#231508] transition-colors border border-amber-200 dark:border-[#3D2010]">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#7B1A1A] to-[#E6A817] text-[#F5C518] flex items-center justify-center font-black text-[10px] sm:text-xs ring-2 ring-[#E6A817]/40 shadow shrink-0">
                     {getInitials(user.name)}
                   </div>
                   <span className="text-xs font-bold hidden md:inline text-amber-950 dark:text-amber-100 max-w-[90px] truncate">
@@ -201,13 +203,13 @@ const Navbar = ({ onOpenAuthModal }) => {
               </div>
             ) : (
               <button onClick={onOpenAuthModal}
-                className="btn-primary px-5 py-2.5 text-xs rounded-full flex items-center gap-1.5">
-                <User className="w-4 h-4" /> Sign In
+                className="btn-primary px-3 sm:px-5 py-1.5 sm:py-2.5 text-xs rounded-full flex items-center gap-1">
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Sign In
               </button>
             )}
 
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300">
+              className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-amber-100 dark:hover:bg-[#231508] text-[#7B1A1A] dark:text-amber-300">
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -216,7 +218,7 @@ const Navbar = ({ onOpenAuthModal }) => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white dark:bg-[#1A0E08] border-t border-amber-100 dark:border-[#3D2010] p-4 space-y-4 animate-fade-in">
+        <div className="lg:hidden bg-white dark:bg-[#1A0E08] border-t border-amber-100 dark:border-[#3D2010] p-4 space-y-4 animate-fade-in shadow-xl">
           <form onSubmit={handleSearchSubmit} className="relative">
             <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search products..."
@@ -228,6 +230,8 @@ const Navbar = ({ onOpenAuthModal }) => {
             {[
               ['Catalog', '/catalog'],
               ['Instant Premix', '/premix'],
+              ['About Us', '/about-us'],
+              ['Contact Us', '/contact-us'],
             ].map(([label, path]) => (
               <Link key={path} to={path} onClick={() => setMobileMenuOpen(false)}
                 className="py-2.5 px-3 border-b border-amber-50 dark:border-[#2A1A0C] last:border-0 hover:text-[#7B1A1A]">

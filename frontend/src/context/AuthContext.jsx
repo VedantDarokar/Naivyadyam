@@ -131,6 +131,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const { data } = await api.post('/auth/forgot-password', { email });
+      showToast('Password reset code sent to your email!', 'success');
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error requesting password reset';
+      showToast(message, 'error');
+      return { success: false, error: message };
+    }
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      const { data } = await api.post('/auth/reset-password', { email, otp, newPassword });
+      showToast('Password reset successful! Please sign in.', 'success');
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error resetting password';
+      showToast(message, 'error');
+      return { success: false, error: message };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -145,6 +169,8 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         addAddress,
         deleteAddress,
+        forgotPassword,
+        resetPassword,
         toastMessage,
         showToast
       }}

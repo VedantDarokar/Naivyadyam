@@ -34,19 +34,8 @@ class MemoryStore {
         email: 'admin@naivadyam.com',
         password: adminHash,
         role: 'admin',
-        phone: '9876543210',
+        phone: '8149471804',
         avatar: 'https://ui-avatars.com/api/?name=Admin&background=7B1A1A&color=F5C518&bold=true',
-        isVerified: true,
-        createdAt: new Date()
-      },
-      {
-        _id: 'usr_customer_1',
-        name: 'Vedant Patel',
-        email: 'vedant@example.com',
-        password: userHash,
-        role: 'customer',
-        phone: '9876543211',
-        avatar: 'https://ui-avatars.com/api/?name=Vedant+Patel&background=E6A817&color=3D1206&bold=true',
         isVerified: true,
         createdAt: new Date()
       }

@@ -9,7 +9,8 @@ const {
   createCoupon,
   deleteCoupon,
   getTickets,
-  updateTicket
+  updateTicket,
+  deleteTicketForAdmin
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -24,5 +25,6 @@ router.post('/coupons', createCoupon);
 router.delete('/coupons/:id', deleteCoupon);
 router.get('/tickets', getTickets);
 router.put('/tickets/:id', updateTicket);
+router.delete('/tickets/:id', deleteTicketForAdmin);
 
 module.exports = router;

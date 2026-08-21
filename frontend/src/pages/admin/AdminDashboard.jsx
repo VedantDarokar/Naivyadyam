@@ -52,12 +52,12 @@ const AdminDashboard = () => {
               <DollarSign className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-emerald-400 flex items-center">
-              +18.4% <ArrowUpRight className="w-3.5 h-3.5" />
+              Real-time
             </span>
           </div>
           <div>
             <p className="text-xs text-slate-400 font-semibold">Total Net Revenue</p>
-            <h3 className="text-2xl font-black text-white mt-1">₹{stats?.totalRevenue?.toLocaleString() || '1,50,000'}</h3>
+            <h3 className="text-2xl font-black text-white mt-1">₹{(stats?.totalRevenue ?? 0).toLocaleString()}</h3>
           </div>
         </div>
 
@@ -67,7 +67,7 @@ const AdminDashboard = () => {
               <ShoppingBag className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-emerald-400 flex items-center">
-              +12.1% <ArrowUpRight className="w-3.5 h-3.5" />
+              Real-time
             </span>
           </div>
           <div>
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
               <Users className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-emerald-400 flex items-center">
-              +8.5% <ArrowUpRight className="w-3.5 h-3.5" />
+              Real-time
             </span>
           </div>
           <div>
@@ -167,20 +167,24 @@ const AdminDashboard = () => {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {stats?.recentOrders?.map((ord) => (
-              <div key={ord._id} className="flex items-center justify-between p-3 bg-slate-800/60 rounded-2xl text-xs">
-                <div>
-                  <p className="font-mono font-bold text-amber-400">#{ord._id.slice(-8).toUpperCase()}</p>
-                  <p className="text-slate-400">{ord.user?.name || 'Customer'}</p>
+          {!stats?.recentOrders || stats.recentOrders.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">No customer orders recorded yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.recentOrders.map((ord) => (
+                <div key={ord._id} className="flex items-center justify-between p-3 bg-slate-800/60 rounded-2xl text-xs">
+                  <div>
+                    <p className="font-mono font-bold text-amber-400">#{ord._id.toString().slice(-8).toUpperCase()}</p>
+                    <p className="text-slate-400">{ord.user?.name || 'Customer'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-white">₹{(ord.priceBreakup?.total || ord.totalAmount || 0).toLocaleString()}</p>
+                    <span className="text-[10px] font-semibold text-slate-400">{ord.orderStatus}</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-white">₹{ord.priceBreakup?.total.toLocaleString()}</p>
-                  <span className="text-[10px] font-semibold text-slate-400">{ord.orderStatus}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

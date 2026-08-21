@@ -65,7 +65,7 @@ const OrderTrackingPage = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Naivadyam-Invoice-${id.slice(-6)}.pdf`);
+      link.setAttribute('download', `Naivadyam-Invoice-${(id || 'ORD').toString().slice(-6)}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -132,7 +132,7 @@ const OrderTrackingPage = () => {
             <ArrowLeft className="w-3.5 h-3.5" /> Back to My Orders
           </button>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            Order #{order._id.slice(-8).toUpperCase()}
+            Order #{order._id ? order._id.toString().slice(-8).toUpperCase() : 'N/A'}
             <span className="text-xs font-semibold px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/20">
               Live Real-Time Socket Tracking
             </span>

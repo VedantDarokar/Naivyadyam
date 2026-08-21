@@ -66,7 +66,7 @@ const createOrder = async (req, res) => {
       orderItems: formattedItems,
       items: formattedItems,
       shippingAddress,
-      paymentMethod: (paymentMethod && paymentMethod.toLowerCase() === 'cod') ? 'COD' : 'Razorpay',
+      paymentMethod: (paymentMethod && paymentMethod.toLowerCase() === 'razorpay') ? 'Razorpay' : 'COD',
       paymentStatus: 'Pending',
       orderStatus: 'Placed',
       totalAmount: total,

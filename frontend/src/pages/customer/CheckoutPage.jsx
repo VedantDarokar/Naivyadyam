@@ -5,7 +5,6 @@ import { AuthContext } from '../../context/AuthContext';
 import { ShieldCheck, Truck, Lock, CreditCard, ChevronRight, Calendar, MapPin, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { fetchPincodeLocation, estimateDelivery } from '../../utils/deliveryEstimator';
-import RazorpayModal from '../../components/common/RazorpayModal';
 
 
 const CheckoutPage = () => {
@@ -17,31 +16,14 @@ const CheckoutPage = () => {
     name: user?.name || '', email: user?.email || '', phone: user?.phone || '',
     street: '', city: '', state: '', pincode: '', landmark: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-
-  // Razorpay Fallback Modal State
-  const [razorpayModalData, setRazorpayModalData] = useState(null);
 
   // Delivery estimate state
   const [deliveryEstimate, setDeliveryEstimate] = useState(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const debounceRef = useRef(null);
-
-  const handleRazorpaySuccess = async (response) => {
-    try {
-      setLoading(true);
-      await api.post('/payment/verify', response);
-      clearCart();
-      navigate(`/order-tracking/${response.orderId}`);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Payment verification failed.');
-    } finally {
-      setLoading(false);
-      setRazorpayModalData(null);
-    }
-  };
 
 
   const discount = appliedCoupon
@@ -50,7 +32,7 @@ const CheckoutPage = () => {
       : (appliedCoupon.value || appliedCoupon.discountValue || 0)
     : 0;
   const shipping = cartTotal >= 299 ? 0 : 49;
-  const codCharge = paymentMethod === 'cod' ? 25 : 0;
+  const codCharge = 0;
   const finalTotal = cartTotal - discount + shipping + codCharge;
 
   const handleUpdate = (field, value) => {
@@ -102,7 +84,7 @@ const CheckoutPage = () => {
           price: i.price
         })),
         shippingAddress: form,
-        paymentMethod,
+        paymentMethod: 'cod',
         couponCode: appliedCoupon?.code,
         totalAmount: finalTotal,
       };
@@ -111,52 +93,8 @@ const CheckoutPage = () => {
       const createdOrder = data.order || data;
       const orderId = createdOrder._id;
 
-      if (paymentMethod === 'razorpay') {
-        try {
-          const { data: rpData } = await api.post('/payment/create-order', { orderId });
-          const isRealRazorpayKey = rpData.key && !rpData.key.includes('Naivadyam') && /^rzp_(test|live)_[A-Za-z0-9]+$/.test(rpData.key);
-          
-          if (isRealRazorpayKey && window.Razorpay) {
-            try {
-              const rzp = new window.Razorpay({
-                key: rpData.key,
-                amount: rpData.amount,
-                currency: 'INR',
-                name: 'Naivadyam — The Divine Serve',
-                description: 'Authentic Indian Premix & Sweets',
-                image: '/naivadyam-logo.png',
-                order_id: rpData.id || rpData.razorpayOrderId,
-                theme: { color: '#7B1A1A' },
-                handler: async (response) => {
-                  await handleRazorpaySuccess({ orderId, ...response });
-                },
-                modal: {
-                  ondismiss: () => setLoading(false)
-                },
-                prefill: { name: form.name, email: form.email, contact: form.phone },
-              });
-              rzp.on('payment.failed', (failRes) => {
-                console.warn('Official Razorpay Payment Failed event:', failRes);
-                setRazorpayModalData({ ...rpData, orderId });
-              });
-              rzp.open();
-            } catch (openErr) {
-              console.warn('Official Razorpay checkout popup error, using gateway modal:', openErr);
-              setRazorpayModalData({ ...rpData, orderId });
-            }
-          } else {
-            // Placeholder/Test mode — use full interactive Razorpay sandbox modal
-            setRazorpayModalData({ ...rpData, orderId });
-          }
-        } catch (rpErr) {
-          console.warn('Razorpay order creation fallback:', rpErr);
-          setRazorpayModalData({ amount: Math.round(finalTotal * 100), id: 'order_rzp_demo', orderId });
-        }
-      } else {
-        // Cash on Delivery
-        clearCart();
-        navigate(`/order-tracking/${orderId}`);
-      }
+      clearCart();
+      navigate(`/order-tracking/${orderId}`);
     } catch (err) {
       alert(err.response?.data?.message || 'Order failed. Please try again.');
     } finally {
@@ -242,19 +180,12 @@ const CheckoutPage = () => {
             <h2 className="text-base font-black text-amber-950 dark:text-amber-50 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-[#7B1A1A] dark:text-[#E6A817]" /> Payment Method
             </h2>
-            <div className="space-y-3">
-              {[
-                { id: 'razorpay', label: '🔒 Pay Online (UPI / Card / Netbanking)', sub: 'Secured by Razorpay' },
-                { id: 'cod', label: '💵 Cash on Delivery', sub: '₹25 COD charge may apply' },
-              ].map(({ id, label, sub }) => (
-                <label key={id} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === id ? 'border-[#E6A817] bg-[#E6A817]/5' : 'border-amber-200 dark:border-[#3D2010] hover:border-[#E6A817]/50'}`}>
-                  <input type="radio" name="payment" value={id} checked={paymentMethod === id} onChange={() => setPaymentMethod(id)} className="accent-[#7B1A1A]" />
-                  <div>
-                    <p className="text-sm font-bold text-amber-950 dark:text-amber-50">{label}</p>
-                    <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70">{sub}</p>
-                  </div>
-                </label>
-              ))}
+            <div className="p-4 rounded-xl border border-[#E6A817] bg-[#E6A817]/5 flex items-center gap-3">
+              <input type="radio" name="payment" value="cod" checked readOnly className="accent-[#7B1A1A]" />
+              <div>
+                <p className="text-sm font-bold text-amber-950 dark:text-amber-50">💵 Cash on Delivery (COD)</p>
+                <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70">Pay in cash when your order is delivered to your doorstep.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -373,22 +304,13 @@ const CheckoutPage = () => {
             </button>
 
             <div className="flex items-center justify-center gap-2 text-[10px] text-amber-600/60 dark:text-amber-400/60">
-              <ShieldCheck className="w-3 h-3 text-[#1D7A40]" /> Secured by Razorpay · SSL Encrypted
+              <ShieldCheck className="w-3 h-3 text-[#1D7A40]" /> 100% Verified Cash on Delivery · SSL Encrypted
             </div>
           </div>
         </div>
       </div>
-
-      {/* Razorpay Gateway Modal Fallback */}
-      <RazorpayModal
-        isOpen={!!razorpayModalData}
-        onClose={() => { setRazorpayModalData(null); setLoading(false); }}
-        orderData={razorpayModalData}
-        onPaymentSuccess={handleRazorpaySuccess}
-      />
     </div>
   );
 };
-
 
 export default CheckoutPage;

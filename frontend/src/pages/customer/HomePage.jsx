@@ -38,18 +38,18 @@ const HomePage = () => {
     <div className="space-y-0 pb-16">
 
       {/* ── Hero Banner ──────────────────────────────────── */}
-      <section className="hero-indian relative min-h-[520px] flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="hero-indian relative min-h-[460px] sm:min-h-[520px] flex items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
             {/* Text Side */}
-            <div className="space-y-6 animate-fade-in">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#E6A817]/30 bg-[#E6A817]/10 text-[#E6A817] text-xs font-bold uppercase tracking-widest">
+            <div className="space-y-4 sm:space-y-6 animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-[#E6A817]/30 bg-[#E6A817]/10 text-[#E6A817] text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                 <span className="w-2 h-2 rounded-full bg-[#1D7A40]"></span>
                 100% Pure Vegetarian · The Divine Serve
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-none tracking-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black leading-tight sm:leading-none tracking-tight">
                 <span className="text-white">Authentic </span>
                 <span className="text-gold-gradient">Indian</span>
                 <br />
@@ -57,26 +57,26 @@ const HomePage = () => {
                 <span className="text-brand-gradient">Premix</span>
               </h1>
 
-              <p className="text-amber-200/80 text-sm sm:text-base max-w-md leading-relaxed">
+              <p className="text-amber-200/80 text-xs sm:text-base max-w-md leading-relaxed">
                 Traditional recipes crafted by master chefs — Chakli Bhajni, Dhokla, Idli, Medu Wada and more. 
                 Ready in minutes. <strong className="text-amber-300">Taste like home.</strong>
               </p>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-row gap-3">
                 <Link to="/catalog"
-                  className="btn-gold px-8 py-3.5 rounded-full text-sm flex items-center gap-2">
-                  Explore Catalog <ArrowRight className="w-4 h-4" />
+                  className="btn-gold px-5 sm:px-8 py-3 rounded-full text-xs sm:text-sm font-black flex items-center justify-center gap-2">
+                  Explore Catalog <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </Link>
                 <Link to="/premix"
-                  className="btn-outline-gold px-6 py-3.5 rounded-full text-sm flex items-center gap-2">
+                  className="btn-outline-gold px-4 sm:px-6 py-3 rounded-full text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5">
                   🥘 Instant Premix
                 </Link>
               </div>
 
               {/* Trust Chips */}
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {['No Preservatives', 'A2 Cow Ghee', 'Stone Ground', 'Since 1998'].map((label) => (
-                  <span key={label} className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-amber-200/70 text-[11px] font-medium">
+                  <span key={label} className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-amber-200/70 text-[10px] sm:text-xs font-medium">
                     ✓ {label}
                   </span>
                 ))}
@@ -84,7 +84,7 @@ const HomePage = () => {
             </div>
 
             {/* Product Showcase Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {FEATURED_PRODUCTS_STATIC.map((p, i) => (
                 <div key={p.id}
                   onClick={() => navigate('/products')}
@@ -92,15 +92,15 @@ const HomePage = () => {
                   style={{ animationDelay: `${i * 0.5}s` }}
                 >
                   <img src={p.img} alt={p.title}
-                    className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-32 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <span className="inline-block px-2 py-0.5 bg-[#E6A817] text-[#3D1206] text-[10px] font-black rounded-md mb-1">
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5">
+                    <span className="inline-block px-1.5 py-0.5 bg-[#E6A817] text-[#3D1206] text-[9px] sm:text-[10px] font-black rounded mb-0.5">
                       {p.badge}
                     </span>
-                    <p className="text-white text-xs font-bold leading-tight">{p.title}</p>
-                    <p className="text-amber-300 text-[10px]">₹{p.price}</p>
+                    <p className="text-white text-xs font-bold leading-tight truncate">{p.title}</p>
+                    <p className="text-amber-300 text-[10px] font-semibold">₹{p.price}</p>
                   </div>
                 </div>
               ))}

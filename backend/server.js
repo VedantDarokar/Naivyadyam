@@ -5,6 +5,10 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+
 const { connectDB } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const Order = require('./models/Order');
@@ -14,21 +18,80 @@ const { protect } = require('./middleware/authMiddleware');
 const app = express();
 const server = http.createServer(app);
 
+// Disable x-powered-by header
+app.disable('x-powered-by');
+
+// 1. HTTP Security Headers with Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false // Allows frontend asset delivery
+}));
+
+// 2. Express 5 Compatible NoSQL Query Injection Protection
+const sanitizeNoSql = (obj) => {
+  if (!obj || typeof obj !== 'object') return;
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$') || key.includes('.')) {
+      delete obj[key];
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      sanitizeNoSql(obj[key]);
+    }
+  }
+};
+
+app.use((req, res, next) => {
+  if (req.body) sanitizeNoSql(req.body);
+  if (req.params) sanitizeNoSql(req.params);
+  next();
+});
+
+// 3. CORS Configuration
+const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:5173'] : '*';
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
+
+// 4. Rate Limiting Protection
+const generalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Limit each IP to 500 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 auth/OTP requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many verification or authentication attempts. Please try again in 15 minutes.' }
+});
+
+// Apply rate limiters
+app.use('/api', generalApiLimiter);
+app.use('/api/auth/login', authRateLimiter);
+app.use('/api/auth/send-registration-otp', authRateLimiter);
+app.use('/api/auth/forgot-password', authRateLimiter);
+app.use('/api/auth/reset-password', authRateLimiter);
+app.use('/api/auth/contact', authRateLimiter);
+
+// Parse JSON & URL-encoded bodies
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
 // Attach Socket.IO to Express app for controllers to access
 app.set('socketio', io);
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Connect Database
 connectDB();
@@ -87,7 +150,12 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Naivadyam API Server Running', timestamp: new Date() });
+  res.json({
+    status: 'OK',
+    env: process.env.NODE_ENV || 'production',
+    message: 'Naivadyam Secure Production API Server Running',
+    timestamp: new Date()
+  });
 });
 
 // Error handling middleware
@@ -97,7 +165,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Naivadyam Server running on port ${PORT}`);
+  console.log(`🔒 Naivadyam Production-Secured Server running on port ${PORT}`);
 });
 
 server.on('error', (err) => {
@@ -106,7 +174,6 @@ server.on('error', (err) => {
     console.log(`🔄 Attempting to kill the process on port ${PORT} and restart...\n`);
     const { execSync } = require('child_process');
     try {
-      // Kill whatever is holding the port (Windows)
       execSync(`for /f "tokens=5" %a in ('netstat -ano ^| findstr :${PORT} ^| findstr LISTENING') do taskkill /F /PID %a`, { shell: 'cmd.exe', stdio: 'inherit' });
     } catch (_) { /* ignore if no process found */ }
     setTimeout(() => {

@@ -1,20 +1,29 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { X, Lock, Mail, User, Phone, ArrowLeft, KeyRound, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { X, Lock, Mail, User, Phone, ArrowLeft, KeyRound, CheckCircle2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import GoogleAccountPickerModal from './GoogleAccountPickerModal';
 import { initiateRealGoogleSignIn } from '../../utils/googleOAuth';
 
 const AuthModal = ({ isOpen, onClose }) => {
-  const { login, googleLogin, register, sendRegistrationOtp } = useContext(AuthContext);
-  const [isLoginTab, setIsLoginTab] = useState(true);
-  const [regStep, setRegStep] = useState(1); // 1: Info, 2: OTP Verification
+  const { login, googleLogin, register, sendRegistrationOtp, forgotPassword, resetPassword } = useContext(AuthContext);
 
+  // Tabs & Views
+  const [isLoginTab, setIsLoginTab] = useState(true);
+  const [regStep, setRegStep] = useState(1); // 1: Registration Form, 2: Registration Email OTP
+
+  // Forgot Password Flow
+  const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isResetStep, setIsResetStep] = useState(false); // false: Enter Email, true: Enter OTP & New Pass
+
+  // Form Fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [emailOtp, setEmailOtp] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Google Account Chooser State
@@ -25,11 +34,15 @@ const AuthModal = ({ isOpen, onClose }) => {
   const resetForm = () => {
     setEmail('');
     setPassword('');
+    setNewPassword('');
     setName('');
     setPhone('');
     setEmailOtp('');
+    setResetOtp('');
     setRegStep(1);
     setIsLoginTab(true);
+    setIsForgotMode(false);
+    setIsResetStep(false);
     setShowGooglePicker(false);
   };
 
@@ -63,9 +76,19 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Sign In Submit
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const res = await login(email, password);
+    setLoading(false);
+    if (res.success) {
+      onClose();
+      resetForm();
+    }
+  };
 
-
-
+  // Registration OTP Request
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!name || !email || !phone || !password) return;
@@ -77,6 +100,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Registration Final Submit
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (!emailOtp) return;
@@ -89,14 +113,32 @@ const AuthModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleLoginSubmit = async (e) => {
+  // Forgot Password Request OTP
+  const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
+    if (!email) return;
     setLoading(true);
-    const res = await login(email, password);
+    const res = await forgotPassword(email);
     setLoading(false);
     if (res.success) {
-      onClose();
-      resetForm();
+      setIsResetStep(true);
+    }
+  };
+
+  // Reset Password Final Submit
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !resetOtp || !newPassword) return;
+    setLoading(true);
+    const res = await resetPassword(email, resetOtp, newPassword);
+    setLoading(false);
+    if (res.success) {
+      setIsForgotMode(false);
+      setIsResetStep(false);
+      setPassword(newPassword);
+      setNewPassword('');
+      setResetOtp('');
+      setIsLoginTab(true);
     }
   };
 
@@ -108,7 +150,7 @@ const AuthModal = ({ isOpen, onClose }) => {
           resetForm();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in"
     >
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative">
 
@@ -135,10 +177,14 @@ const AuthModal = ({ isOpen, onClose }) => {
             />
           </div>
           <h2 className="text-xl font-bold">
-            {isLoginTab ? 'Welcome Back!' : regStep === 1 ? 'Create an Account' : 'Verify Your Email'}
+            {isForgotMode
+              ? isResetStep ? 'Set New Password' : 'Reset Account Password'
+              : isLoginTab ? 'Welcome Back!' : regStep === 1 ? 'Create an Account' : 'Verify Your Email'}
           </h2>
           <p className="text-xs text-amber-200/90 font-medium">
-            {isLoginTab
+            {isForgotMode
+              ? isResetStep ? `Enter 6-digit code sent to ${email}` : 'Enter your registered email address to receive reset code'
+              : isLoginTab
               ? 'Access order history, saved addresses & rewards'
               : regStep === 1
               ? 'Join Naivadyam for exclusive deals & instant checkout'
@@ -146,32 +192,150 @@ const AuthModal = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800">
-          <button
-            onClick={() => { setIsLoginTab(true); setRegStep(1); }}
-            className={`flex-1 py-3 text-xs font-bold border-b-2 transition-colors ${
-              isLoginTab
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => setIsLoginTab(false)}
-            className={`flex-1 py-3 text-xs font-bold border-b-2 transition-colors ${
-              !isLoginTab
-                ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            Register
-          </button>
-        </div>
+        {/* Tab Buttons (Hide when in Forgot Password mode) */}
+        {!isForgotMode && (
+          <div className="flex border-b border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => { setIsLoginTab(true); setRegStep(1); }}
+              className={`flex-1 py-3 text-xs font-bold border-b-2 transition-colors ${
+                isLoginTab
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/5'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setIsLoginTab(false); setIsForgotMode(false); }}
+              className={`flex-1 py-3 text-xs font-bold border-b-2 transition-colors ${
+                !isLoginTab
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-500/5'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+        )}
 
         {/* Form Body */}
-        {isLoginTab ? (
+        {isForgotMode ? (
+          !isResetStep ? (
+            /* FORGOT PASSWORD STEP 1: ENTER EMAIL */
+            <form onSubmit={handleForgotPasswordSubmit} className="p-6 space-y-4">
+              <button
+                type="button"
+                onClick={() => setIsForgotMode(false)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 mb-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
+              </button>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Registered Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@domain.com"
+                    autoFocus
+                    required
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !email}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 mt-2"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Send Reset Verification Code →'
+                )}
+              </button>
+            </form>
+          ) : (
+            /* FORGOT PASSWORD STEP 2: ENTER OTP & NEW PASSWORD */
+            <form onSubmit={handleResetPasswordSubmit} className="p-6 space-y-4">
+              <button
+                type="button"
+                onClick={() => setIsResetStep(false)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 hover:text-amber-700 mb-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Change email
+              </button>
+
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-xs text-amber-900 dark:text-amber-200">
+                📧 A 6-digit password reset code has been sent to <strong>{email}</strong>.
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  6-Digit Verification Code
+                </label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={resetOtp}
+                    onChange={(e) => setResetOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="Enter 6-digit code"
+                    autoFocus
+                    required
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono tracking-widest focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  New Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 chars)"
+                    required
+                    minLength={6}
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || resetOtp.length !== 6 || newPassword.length < 6}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 mt-2"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" /> Reset Password & Sign In
+                  </>
+                )}
+              </button>
+            </form>
+          )
+        ) : isLoginTab ? (
           /* LOGIN FORM */
           <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
             <div>
@@ -190,7 +354,16 @@ const AuthModal = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                <button
+                  type="button"
+                  onClick={() => { setIsForgotMode(true); setIsResetStep(false); }}
+                  className="text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
@@ -414,6 +587,5 @@ const AuthModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
-
 
 export default AuthModal;

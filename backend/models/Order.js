@@ -30,7 +30,7 @@ const orderSchema = new mongoose.Schema({
     pincode: { type: String, required: true },
     type: { type: String, default: 'Home' }
   },
-  paymentMethod: { type: String, default: 'Razorpay' },
+  paymentMethod: { type: String, default: 'COD' },
   paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Failed', 'Refunded'], default: 'Pending' },
   paymentDetails: {
     transactionId: { type: String, default: '' },
