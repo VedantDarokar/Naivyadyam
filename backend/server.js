@@ -101,12 +101,16 @@ app.use('/api/auth/contact', authRateLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize Socket.IO with CORS
+// Initialize Socket.IO with dynamic CORS reflecting
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
   },
+  allowEIO3: true,
   transports: ['polling', 'websocket']
 });
 

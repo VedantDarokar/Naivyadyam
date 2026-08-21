@@ -17,5 +17,6 @@ export const socket = io(getSocketUrl(), {
   reconnectionAttempts: 10,
   reconnectionDelay: 2000,
   timeout: 20000,
+  withCredentials: true,
   transports: ['polling', 'websocket']
 });
